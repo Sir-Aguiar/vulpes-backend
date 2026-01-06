@@ -6,3 +6,18 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum TeacherPermissionRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model TeacherPermissionRequest {
+  id        Int                            @id @default(autoincrement())
+  status    TeacherPermissionRequestStatus @default(PENDING)
+  createdAt DateTime                       @default(now())
+  updatedAt DateTime                       @updatedAt
+
+  @@map("teacher_permission_requests")
+}
