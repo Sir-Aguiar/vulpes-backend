@@ -11,9 +11,8 @@ RUN apk add --no-cache redis
 
 COPY . .
 
-# Generate Prisma client
 RUN npx prisma generate
 
 EXPOSE 4000
 
-CMD ["npm", "run", "server"]
+CMD ["npm", "run", "start:dev"]
