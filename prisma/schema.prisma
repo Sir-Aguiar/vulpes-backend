@@ -1,6 +1,5 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -14,10 +13,49 @@ enum TeacherPermissionRequestStatus {
 }
 
 model TeacherPermissionRequest {
-  id        Int                            @id @default(autoincrement())
-  status    TeacherPermissionRequestStatus @default(PENDING)
-  createdAt DateTime                       @default(now())
-  updatedAt DateTime                       @updatedAt
+  id     Int                            @id @default(autoincrement())
+  status TeacherPermissionRequestStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("teacher_permission_requests")
+}
+
+enum TaskInputMode {
+  PARAM
+  LEIA
+}
+
+model Task {
+  id          String        @id @default(uuid())
+  title       String        @db.VarChar(255)
+  description String        @db.Text
+  functionDef String        @db.Text
+  inputMode   TaskInputMode @default(PARAM)
+  isVisible   Boolean       @default(true)
+
+  taskParams TaskParam[]
+  taskTests  TaskTest[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model TaskParam {
+  paramId String  @id @default(uuid())
+  taskId  String
+  name    String  @db.VarChar(255)
+  type    String  @db.VarChar(100)
+  isArray Boolean @default(false)
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model TaskTest {
+  testId         String @id @default(uuid())
+  taskId         String
+  input          String[] @db.Text
+  expectedOutput String @db.Text
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
