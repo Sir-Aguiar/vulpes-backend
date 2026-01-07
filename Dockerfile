@@ -1,18 +1,15 @@
-FROM node:alpine
+FROM node:24-alpine
 
-WORKDIR /usr/app
+WORKDIR /app
 
 COPY package*.json ./
+COPY prisma ./prisma/
 
 RUN npm install
 
-RUN apk add --no-cache postgresql-client
-RUN apk add --no-cache redis
-
 COPY . .
 
-RUN npx prisma generate
+EXPOSE 8080
 
-EXPOSE 4000
-
-CMD ["npm", "run", "start:dev"]
+# Command to run the application
+CMD ["node", "app.js"]
