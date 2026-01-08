@@ -6,22 +6,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum TeacherPermissionRequestStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
-model TeacherPermissionRequest {
-  id     Int                            @id @default(autoincrement())
-  status TeacherPermissionRequestStatus @default(PENDING)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("teacher_permission_requests")
-}
-
 enum TaskInputMode {
   PARAM
   LEIA
@@ -52,10 +36,31 @@ model TaskParam {
 }
 
 model TaskTest {
-  testId         String @id @default(uuid())
+  testId         String   @id @default(uuid())
   taskId         String
   input          String[] @db.Text
-  expectedOutput String @db.Text
+  expectedOutput String   @db.Text
 
   task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+enum TeacherPermissionRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model TeacherPermissionRequest {
+  id                 Int                            @id @default(autoincrement())
+  name               String                         @db.VarChar(255)
+  personalEmail      String                         @unique @db.VarChar(255)
+  institutionalEmail String                         @db.VarChar(255)
+  institution        String                         @db.VarChar(255)
+  requestFileUrl     String                         @db.Text
+  requestStatus      TeacherPermissionRequestStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("teacher_permission_requests")
 }
