@@ -6,6 +6,17 @@ datasource db {
   provider = "postgresql"
 }
 
+model Student {
+  id       String @id @default(uuid())
+  name     String @db.VarChar(255)
+  email    String @unique @db.VarChar(255)
+  password String @db.VarChar(255)
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  submissions Submission[]
+}
+
 enum TaskInputMode {
   PARAM
   LEIA
@@ -19,10 +30,11 @@ model Task {
   inputMode   TaskInputMode @default(PARAM)
   isVisible   Boolean       @default(true)
 
-  taskParams TaskParam[]
-  taskTests  TaskTest[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  taskParams  TaskParam[]
+  taskTests   TaskTest[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  submissions Submission[]
 }
 
 model TaskParam {
@@ -63,4 +75,16 @@ model TeacherPermissionRequest {
   updatedAt DateTime @updatedAt
 
   @@map("teacher_permission_requests")
+}
+
+model Submission {
+  id          String   @id @default(uuid())
+  studentId   String
+  taskId      String
+  code        String   @db.Text
+  isCorrect   Boolean  @default(false)
+  submittedAt DateTime @default(now())
+
+  task    Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
