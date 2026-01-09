@@ -9,4 +9,8 @@ export class TeacherPermissionService {
   async create(data: ICreateTeacherPermissionDTO) {
     return this.repository.create(data);
   }
+
+  getById(id: number) {
+    return this.repository.getById(id);
+  }
 }

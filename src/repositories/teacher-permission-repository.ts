@@ -6,6 +6,8 @@ export abstract class TeacherPermissionRepository {
   abstract create(
     data: ICreateTeacherPermissionDTO,
   ): Promise<TeacherPermissionRequest>;
+
+  abstract getById(id: number): Promise<TeacherPermissionRequest | null>;
 }
 
 export class PrismaTeacherPermissionRepository implements TeacherPermissionRepository {
@@ -14,6 +16,12 @@ export class PrismaTeacherPermissionRepository implements TeacherPermissionRepos
   ): Promise<TeacherPermissionRequest> {
     return await prisma.teacherPermissionRequest.create({
       data,
+    });
+  }
+
+  async getById(id: number): Promise<TeacherPermissionRequest | null> {
+    return await prisma.teacherPermissionRequest.findUnique({
+      where: { id },
     });
   }
 }

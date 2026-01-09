@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Post,
   UploadedFile,
   UseInterceptors,
@@ -36,5 +37,10 @@ export class TeacherPermissionController {
     });
 
     return this.service.create(validatedData);
+  }
+
+  @Get(':id')
+  async getById(@Body('id') id: string) {
+    return await this.service.getById(Number(id));
   }
 }
