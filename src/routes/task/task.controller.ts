@@ -2,6 +2,7 @@ import { Body, Controller, Get, Post, Query, UsePipes } from '@nestjs/common';
 import { TaskService } from './task.service';
 import { ZodValidationPipe } from '../../pipes/Zod.pipe';
 import * as Task from '../../dtos/Task';
+import { TaskTest } from '@prisma/client';
 
 @Controller('task')
 export class TaskController {
@@ -15,20 +16,15 @@ export class TaskController {
 
   @Get()
   async getTaskById(@Query('id') id: string) {
-    const task = await this.taskService.getById(id);
+    const tasks = await this.taskService.getById(id);
 
-    const formattedTestCases = task.taskTests.map((testCase) => ({
+    const formattedTestCases = tasks.taskTests.map((testCase: any) => ({
       ...testCase,
-      input: Array.isArray(testCase.input)
-        ? testCase.input.map((value: string) => JSON.parse(value))
-        : JSON.parse(testCase.input),
+      input: JSON.parse(testCase.input),
     }));
 
-    const formattedTask = {
-      ...task,
-      taskTests: formattedTestCases,
-    };
+    tasks.taskTests = formattedTestCases;
 
-    return formattedTask;
+    return tasks;
   }
 }
