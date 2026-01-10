@@ -21,7 +21,7 @@ export class PrismaTeacherPermissionRepository implements TeacherPermissionRepos
 
   async getById(id: number): Promise<TeacherPermissionRequest | null> {
     return await prisma.teacherPermissionRequest.findUnique({
-      where: { id },
+      where: { teacherPermissionRequestId: id },
     });
   }
 }

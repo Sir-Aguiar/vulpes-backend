@@ -7,10 +7,10 @@ datasource db {
 }
 
 model Student {
-  id       String @id @default(uuid())
-  name     String @db.VarChar(255)
-  email    String @unique @db.VarChar(255)
-  password String @db.VarChar(255)
+  studentId String @id @default(uuid())
+  name      String @db.VarChar(255)
+  email     String @unique @db.VarChar(255)
+  password  String @db.VarChar(255)
 
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -23,7 +23,7 @@ enum TaskInputMode {
 }
 
 model Task {
-  id          String        @id @default(uuid())
+  taskId      String        @id @default(uuid())
   title       String        @db.VarChar(255)
   description String        @db.Text
   functionDef String        @db.Text
@@ -44,7 +44,7 @@ model TaskParam {
   type    String  @db.VarChar(100)
   isArray Boolean @default(false)
 
-  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task Task @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
 }
 
 model TaskTest {
@@ -53,7 +53,7 @@ model TaskTest {
   input          String[] @db.Text
   expectedOutput String   @db.Text
 
-  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task Task @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
 }
 
 enum TeacherPermissionRequestStatus {
@@ -63,13 +63,13 @@ enum TeacherPermissionRequestStatus {
 }
 
 model TeacherPermissionRequest {
-  id                 Int                            @id @default(autoincrement())
-  name               String                         @db.VarChar(255)
-  personalEmail      String                         @unique @db.VarChar(255)
-  institutionalEmail String                         @db.VarChar(255)
-  institution        String                         @db.VarChar(255)
-  requestFileUrl     String                         @db.Text
-  requestStatus      TeacherPermissionRequestStatus @default(PENDING)
+  teacherPermissionRequestId Int                            @id @default(autoincrement())
+  name                       String                         @db.VarChar(255)
+  personalEmail              String                         @unique @db.VarChar(255)
+  institutionalEmail         String                         @db.VarChar(255)
+  institution                String                         @db.VarChar(255)
+  requestFileUrl             String                         @db.Text
+  requestStatus              TeacherPermissionRequestStatus @default(PENDING)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -78,13 +78,13 @@ model TeacherPermissionRequest {
 }
 
 model Submission {
-  id          String   @id @default(uuid())
-  studentId   String
-  taskId      String
-  code        String   @db.Text
-  isCorrect   Boolean  @default(false)
-  submittedAt DateTime @default(now())
+  submissionId String   @id @default(uuid())
+  studentId    String?
+  taskId       String
+  code         String   @db.Text
+  isCorrect    Boolean  @default(false)
+  submittedAt  DateTime @default(now())
 
-  task    Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  task    Task     @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+  student Student? @relation(fields: [studentId], references: [studentId], onDelete: Cascade)
 }

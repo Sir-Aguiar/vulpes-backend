@@ -6,6 +6,7 @@ export const CodeTestSchema = Zod.object({
 });
 
 export const ParamSchema = Zod.object({
+  paramId: Zod.string().min(1, 'ID de parâmetro inválido'),
   name: Zod.string().min(1, 'Defina o nome do parâmetro'),
   type: Zod.string().min(1, 'Defina o tipo do parâmetro'),
   isArray: Zod.boolean().default(false),
@@ -17,7 +18,7 @@ export const CreateTaskSchema = Zod.object({
   functionDef: Zod.string().min(1, 'Defina a assinatura da função'),
   inputMode: Zod.string(),
   isVisible: Zod.boolean().default(true),
-  params: Zod.array(ParamSchema).min(1, 'Defina ao menos um parâmetro'),
+  taskParams: Zod.array(ParamSchema).min(1, 'Defina ao menos um parâmetro'),
   testCases: Zod.array(CodeTestSchema).min(
     1,
     'Defina ao menos um caso de teste',

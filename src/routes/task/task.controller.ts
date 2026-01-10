@@ -15,6 +15,20 @@ export class TaskController {
 
   @Get()
   async getTaskById(@Query('id') id: string) {
-    return this.taskService.getById(id);
+    const task = await this.taskService.getById(id);
+
+    const formattedTestCases = task.taskTests.map((testCase) => ({
+      ...testCase,
+      input: Array.isArray(testCase.input)
+        ? testCase.input.map((value: string) => JSON.parse(value))
+        : JSON.parse(testCase.input),
+    }));
+
+    const formattedTask = {
+      ...task,
+      taskTests: formattedTestCases,
+    };
+
+    return formattedTask;
   }
 }
