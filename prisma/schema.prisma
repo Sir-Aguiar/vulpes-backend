@@ -6,15 +6,23 @@ datasource db {
   provider = "postgresql"
 }
 
-model Student {
-  studentId String @id @default(uuid())
-  name      String @db.VarChar(255)
-  email     String @unique @db.VarChar(255)
-  password  String @db.VarChar(255)
-
+model User {
+  userId      String       @id @default(uuid())
+  name        String       @db.VarChar(255)
+  email       String       @unique @db.VarChar(255)
+  password    String       @db.VarChar(255)
+  institution String?      @db.VarChar(255)
+  role        Role         @default(STUDENT)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   submissions Submission[]
+  tasks Task[]
+
+  classes Class[]
+
+  classStudents ClassStudent[]
+
+  studentClassPermissionRequests StudentClassPermissionRequest[]
 }
 
 enum TaskInputMode {
@@ -22,19 +30,30 @@ enum TaskInputMode {
   LEIA
 }
 
+enum Role {
+  STUDENT
+  PROFESSOR
+  ADMIN
+}
+
 model Task {
   taskId      String        @id @default(uuid())
+  creatorId   String        
   title       String        @db.VarChar(255)
   description String        @db.Text
   functionDef String        @db.Text
   inputMode   TaskInputMode @default(PARAM)
   isVisible   Boolean       @default(true)
+  isPublic    Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   taskParams  TaskParam[]
   taskTests   TaskTest[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
   submissions Submission[]
+  creator     User          @relation(fields: [creatorId], references: [userId], onDelete: Cascade)
+
+  classTasks ClassTask[]
 }
 
 model TaskParam {
@@ -48,43 +67,119 @@ model TaskParam {
 }
 
 model TaskTest {
-  testId         String   @id @default(uuid())
-  taskId         String
-  input          String[] @db.Text
-  expectedOutput String   @db.Text
+  testId             String   @id @default(uuid())
+  taskId             String
+  input              String[] @db.Text
+  expectedOutput     String   @db.Text
+  expectedOutputType String   @db.VarChar(100)
 
   task Task @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
 }
 
-enum TeacherPermissionRequestStatus {
+enum ProfessorPermissionRequestStatus {
   PENDING
   APPROVED
   REJECTED
 }
 
-model TeacherPermissionRequest {
-  teacherPermissionRequestId Int                            @id @default(autoincrement())
-  name                       String                         @db.VarChar(255)
-  personalEmail              String                         @unique @db.VarChar(255)
-  institutionalEmail         String                         @db.VarChar(255)
-  institution                String                         @db.VarChar(255)
-  requestFileUrl             String                         @db.Text
-  requestStatus              TeacherPermissionRequestStatus @default(PENDING)
+model ProfessorPermissionRequest {
+  professorPermissionRequestId Int                            @id @default(autoincrement())
+  name                       String                           @db.VarChar(255)
+  personalEmail              String                           @unique @db.VarChar(255)
+  institutionalEmail         String                           @db.VarChar(255)
+  institution                String                           @db.VarChar(255)
+  requestFileUrl             String                           @db.Text
+  requestStatus              ProfessorPermissionRequestStatus @default(PENDING)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("teacher_permission_requests")
+  @@map("professor_permission_requests")
 }
 
 model Submission {
-  submissionId String   @id @default(uuid())
-  studentId    String?
-  taskId       String
-  code         String   @db.Text
-  isCorrect    Boolean  @default(false)
-  submittedAt  DateTime @default(now())
+  submissionId      String   @id @default(uuid())
+  studentId         String
+  taskId            String
+  code              String   @db.Text
+  isCorrect         Boolean  @default(false)
+  submittedAt       DateTime @default(now())
+  professorComments String?  @db.Text
+  task              Task     @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+  student           User     @relation(fields: [studentId], references: [userId], onDelete: Cascade)
+}
 
-  task    Task     @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
-  student Student? @relation(fields: [studentId], references: [studentId], onDelete: Cascade)
+model Class {
+  classId     String   @id @default(uuid())
+  code        Int      @unique
+  name        String   @db.VarChar(255)
+  professorId String
+  professor   User     @relation(fields: [professorId], references: [userId], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  classStudents ClassStudent[]
+
+  studentClassPermissionRequests StudentClassPermissionRequest[]
+
+  classTasks ClassTask[]
+
+  lists List[]
+}
+
+model ClassStudent {
+  classId        String
+  studentId      String
+  createdAt      DateTime @default(now()) 
+  class          Class    @relation(fields: [classId], references: [classId], onDelete: Cascade)
+  student        User     @relation(fields: [studentId], references: [userId], onDelete: Cascade)
+
+  @@id([classId, studentId])
+}
+
+model StudentClassPermissionRequest {
+  classId        String
+  studentId      String
+  message        String?  @db.Text
+  createdAt      DateTime @default(now())
+  class          Class    @relation(fields: [classId], references: [classId], onDelete: Cascade)
+  student        User     @relation(fields: [studentId], references: [userId], onDelete: Cascade)
+
+  @@id([classId, studentId])
+  @@map("student_class_permission_requests")
+}
+
+model ClassTask {
+  classId  String
+  taskId   String
+  createdAt DateTime @default(now())
+  class    Class @relation(fields: [classId], references: [classId], onDelete: Cascade)
+  task     Task  @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+
+  @@id([classId, taskId])
+  classTaskLists ClassTaskList[]
+}
+
+model List {
+  listId          String   @id @default(uuid())
+  classId         String
+  title           String   @db.VarChar(255)
+  deadline        DateTime 
+  submissionLimit Int?      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  class           Class    @relation(fields: [classId], references: [classId], onDelete: Cascade)
+
+  classTaskLists ClassTaskList[]
+}
+
+model ClassTaskList {
+  classId         String
+  taskId          String
+  listId          String
+  createdAt       DateTime @default(now())
+  classTask      ClassTask @relation(fields: [classId, taskId], references: [classId, taskId], onDelete: Cascade)
+  list           List      @relation(fields: [listId], references: [listId], onDelete: Cascade)
+
+  @@id([classId, taskId, listId])
 }
