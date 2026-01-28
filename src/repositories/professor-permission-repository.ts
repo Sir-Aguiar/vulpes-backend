@@ -8,6 +8,8 @@ export abstract class ProfessorPermissionRepository {
   ): Promise<ProfessorPermissionRequest>;
 
   abstract getById(id: number): Promise<ProfessorPermissionRequest | null>;
+
+  abstract getAll(): Promise<ProfessorPermissionRequest[]>;
 }
 
 export class PrismaProfessorPermissionRepository implements ProfessorPermissionRepository {
@@ -23,5 +25,9 @@ export class PrismaProfessorPermissionRepository implements ProfessorPermissionR
     return await prisma.professorPermissionRequest.findUnique({
       where: { professorPermissionRequestId: id },
     });
+  }
+
+  async getAll(): Promise<ProfessorPermissionRequest[]> {
+    return await prisma.professorPermissionRequest.findMany();
   }
 }
