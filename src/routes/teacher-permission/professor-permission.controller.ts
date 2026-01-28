@@ -6,15 +6,15 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
-import { TeacherPermissionService } from './teacher-permission.service';
+import { ProfessorPermissionService } from './professor-permission.service';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { CreateTeacherPermissionSchema } from '../../dtos/TeacherPermission';
+import { CreateProfessorPermissionSchema } from '../../dtos/ProfessorPermission';
 import { StorageService } from '../../modules/storage/storage.service';
 
-@Controller('teacher-permission-request')
-export class TeacherPermissionController {
+@Controller('professor-permission-request')
+export class ProfessorPermissionController {
   constructor(
-    private readonly service: TeacherPermissionService,
+    private readonly service: ProfessorPermissionService,
     private readonly storageService: StorageService,
   ) {}
 
@@ -24,14 +24,14 @@ export class TeacherPermissionController {
     @Body() body: any,
     @UploadedFile() document: Express.Multer.File,
   ) {
-    const BodySchema = CreateTeacherPermissionSchema.omit({
+    const BodySchema = CreateProfessorPermissionSchema.omit({
       requestFileUrl: true,
     });
     const validatedBody = BodySchema.parse(body);
 
     const { url } = await this.storageService.uploadFile(document);
 
-    const validatedData = CreateTeacherPermissionSchema.parse({
+    const validatedData = CreateProfessorPermissionSchema.parse({
       ...validatedBody,
       requestFileUrl: url,
     });
