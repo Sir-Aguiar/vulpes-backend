@@ -45,6 +45,7 @@ model Task {
   inputMode   TaskInputMode @default(PARAM)
   isVisible   Boolean       @default(true)
   isPublic    Boolean       @default(false)
+  deletedAt   DateTime?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
