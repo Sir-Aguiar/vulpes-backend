@@ -2,14 +2,20 @@ import {
   Body,
   Controller,
   Get,
+  Patch,
   Post,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ProfessorPermissionService } from './professor-permission.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateProfessorPermissionSchema } from '../../dtos/ProfessorPermission';
 import { StorageService } from '../../modules/storage/storage.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '@prisma/client';
 
 @Controller('professor-permission-request')
 export class ProfessorPermissionController {
@@ -19,6 +25,8 @@ export class ProfessorPermissionController {
   ) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STUDENT)
   @UseInterceptors(FileInterceptor('document'))
   async create(
     @Body() body: any,
@@ -40,7 +48,18 @@ export class ProfessorPermissionController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async getById(@Body('id') id: string) {
     return await this.service.getById(Number(id));
+  }
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async respond(
+    @Body('id') id: string,
+    @Body() body: { requestStatus: 'APPROVED' | 'REJECTED' },
+  ) {
+    return await this.service.respond(Number(id), body);
   }
 }

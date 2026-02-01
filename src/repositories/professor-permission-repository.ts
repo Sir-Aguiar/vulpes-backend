@@ -10,6 +10,11 @@ export abstract class ProfessorPermissionRepository {
   abstract getById(id: number): Promise<ProfessorPermissionRequest | null>;
 
   abstract getAll(): Promise<ProfessorPermissionRequest[]>;
+
+  abstract update(
+    id: number,
+    data: Partial<ProfessorPermissionRequest>,
+  ): Promise<ProfessorPermissionRequest>;
 }
 
 export class PrismaProfessorPermissionRepository implements ProfessorPermissionRepository {
@@ -29,5 +34,15 @@ export class PrismaProfessorPermissionRepository implements ProfessorPermissionR
 
   async getAll(): Promise<ProfessorPermissionRequest[]> {
     return await prisma.professorPermissionRequest.findMany();
+  }
+
+  async update(
+    id: number,
+    data: Partial<ProfessorPermissionRequest>,
+  ): Promise<ProfessorPermissionRequest> {
+    return await prisma.professorPermissionRequest.update({
+      where: { professorPermissionRequestId: id },
+      data,
+    });
   }
 }
