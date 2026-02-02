@@ -18,7 +18,10 @@ export interface IStudentClassPermissionRequestWithRelations extends StudentClas
     classId: string;
     name: string;
     code: number;
-    professorId: string;
+    professor: {
+      userId: string;
+      name: string;
+    };
   };
 }
 
@@ -92,7 +95,7 @@ export class PrismaStudentClassPermissionRequestRepository implements StudentCla
             classId: true,
             name: true,
             code: true,
-            professorId: true,
+            professor: true,
           },
         },
       },
@@ -142,7 +145,7 @@ export class PrismaStudentClassPermissionRequestRepository implements StudentCla
             classId: true,
             name: true,
             code: true,
-            professorId: true,
+            professor: true,
           },
         },
       },
