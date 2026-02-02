@@ -17,7 +17,7 @@ export class PrismaSubmissionRepository implements SubmissionRepository {
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         throw new ApplicationError(
-          500,
+          400,
           `Erro ao criar submissão (Prisma ${error.code}): ${error.message}`,
         );
       }

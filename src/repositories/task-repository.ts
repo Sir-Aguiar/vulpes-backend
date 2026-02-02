@@ -41,7 +41,7 @@ export class PrismaTaskRepository implements TaskRepository {
       });
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
-        throw new ApplicationError(500, 'Erro ao criar tarefa', error);
+        throw new ApplicationError(400, 'Erro ao criar tarefa', error);
       }
     }
   }
