@@ -33,6 +33,11 @@ export interface IClassTaskListWithRelations extends ClassTaskList {
 
 export abstract class ClassTaskListRepository {
   abstract create(data: ICreateClassTaskListDTO): Promise<ClassTaskList>;
+  abstract createMany(
+    classId: string,
+    listId: string,
+    taskIds: string[],
+  ): Promise<{ count: number }>;
   abstract getByIds(
     classId: string,
     taskId: string,
@@ -47,6 +52,11 @@ export abstract class ClassTaskListRepository {
     taskId: string,
     listId: string,
   ): Promise<void>;
+  abstract deleteMany(
+    classId: string,
+    listId: string,
+    taskIds: string[],
+  ): Promise<{ count: number }>;
 }
 
 @Injectable()
@@ -72,6 +82,29 @@ export class PrismaClassTaskListRepository implements ClassTaskListRepository {
         throw new ApplicationError(
           400,
           'Erro ao associar tarefa à lista',
+          error,
+        );
+      }
+      throw error;
+    }
+  }
+
+  async createMany(
+    classId: string,
+    listId: string,
+    taskIds: string[],
+  ): Promise<{ count: number }> {
+    try {
+      const result = await prisma.classTaskList.createMany({
+        data: taskIds.map((taskId) => ({ classId, taskId, listId })),
+        skipDuplicates: true,
+      });
+      return { count: result.count };
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        throw new ApplicationError(
+          400,
+          'Erro ao associar tarefas à lista',
           error,
         );
       }
@@ -156,6 +189,32 @@ export class PrismaClassTaskListRepository implements ClassTaskListRepository {
         throw new ApplicationError(
           400,
           'Erro ao remover tarefa da lista',
+          error,
+        );
+      }
+      throw error;
+    }
+  }
+
+  async deleteMany(
+    classId: string,
+    listId: string,
+    taskIds: string[],
+  ): Promise<{ count: number }> {
+    try {
+      const result = await prisma.classTaskList.deleteMany({
+        where: {
+          classId,
+          listId,
+          taskId: { in: taskIds },
+        },
+      });
+      return { count: result.count };
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        throw new ApplicationError(
+          400,
+          'Erro ao remover tarefas da lista',
           error,
         );
       }

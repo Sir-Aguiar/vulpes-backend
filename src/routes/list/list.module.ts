@@ -13,6 +13,18 @@ import {
   PrismaClassStudentRepository,
   ClassStudentRepository,
 } from '../../repositories/class-student-repository';
+import {
+  PrismaClassTaskRepository,
+  ClassTaskRepository,
+} from '../../repositories/class-task-repository';
+import {
+  PrismaClassTaskListRepository,
+  ClassTaskListRepository,
+} from '../../repositories/class-task-list-repository';
+import {
+  PrismaTaskRepository,
+  TaskRepository,
+} from '../../repositories/task-repository';
 
 @Module({
   controllers: [ListController],
@@ -29,6 +41,18 @@ import {
     {
       provide: ClassStudentRepository,
       useClass: PrismaClassStudentRepository,
+    },
+    {
+      provide: ClassTaskRepository,
+      useClass: PrismaClassTaskRepository,
+    },
+    {
+      provide: ClassTaskListRepository,
+      useClass: PrismaClassTaskListRepository,
+    },
+    {
+      provide: TaskRepository,
+      useClass: PrismaTaskRepository,
     },
   ],
   exports: [ListService, ListRepository],

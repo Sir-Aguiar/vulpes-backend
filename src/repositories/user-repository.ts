@@ -1,11 +1,12 @@
 import { ICreateUserDTO } from '../dtos/User';
-import { User } from '@prisma/client';
+import { User, Role } from '@prisma/client';
 import { prisma } from '../database/prismaClient';
 
 export abstract class UserRepository {
   abstract create(data: ICreateUserDTO): Promise<User>;
   abstract findByEmail(email: string): Promise<User | null>;
   abstract findById(userId: string): Promise<User | null>;
+  abstract updateRole(userId: string, role: Role): Promise<User>;
 }
 
 export class PrismaUserRepository implements UserRepository {
@@ -24,6 +25,13 @@ export class PrismaUserRepository implements UserRepository {
   async findById(userId: string): Promise<User | null> {
     return await prisma.user.findUnique({
       where: { userId },
+    });
+  }
+
+  async updateRole(userId: string, role: Role): Promise<User> {
+    return await prisma.user.update({
+      where: { userId },
+      data: { role },
     });
   }
 }

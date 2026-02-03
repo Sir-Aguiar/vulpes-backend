@@ -19,11 +19,13 @@ export const CreateTaskSchema = Zod.object({
   functionDef: Zod.string().min(1, 'Defina a assinatura da função'),
   inputMode: Zod.enum(['PARAM', 'LEIA']),
   isVisible: Zod.boolean().default(true),
+  isPublic: Zod.boolean().default(false),
   taskParams: Zod.array(ParamSchema).min(1, 'Defina ao menos um parâmetro'),
   testCases: Zod.array(CodeTestSchema).min(
     1,
     'Defina ao menos um caso de teste',
   ),
+  classIds: Zod.array(Zod.string().uuid()).optional().default([]),
 });
 
 export const UpdateTaskParamSchema = Zod.object({
@@ -49,6 +51,7 @@ export const UpdateTaskSchema = Zod.object({
   isPublic: Zod.boolean().optional(),
   taskParams: Zod.array(UpdateTaskParamSchema).optional(),
   taskTests: Zod.array(UpdateTaskTestSchema).optional(),
+  classIds: Zod.array(Zod.uuid()).optional(),
 });
 
 export const GetTasksQuerySchema = Zod.object({

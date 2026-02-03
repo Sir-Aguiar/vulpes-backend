@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Patch,
   Post,
   UploadedFile,
@@ -23,6 +24,13 @@ export class ProfessorPermissionController {
     private readonly service: ProfessorPermissionService,
     private readonly storageService: StorageService,
   ) {}
+
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async getAll() {
+    return await this.service.getAll();
+  }
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -50,14 +58,14 @@ export class ProfessorPermissionController {
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  async getById(@Body('id') id: string) {
+  async getById(@Param('id') id: string) {
     return await this.service.getById(Number(id));
   }
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   async respond(
-    @Body('id') id: string,
+    @Param('id') id: string,
     @Body() body: { requestStatus: 'APPROVED' | 'REJECTED' },
   ) {
     return await this.service.respond(Number(id), body);

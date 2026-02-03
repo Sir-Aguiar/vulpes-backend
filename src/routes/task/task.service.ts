@@ -9,18 +9,48 @@ import {
   IUpdateTaskDTO,
 } from '../../dtos/Task';
 import { TaskRepository } from '../../repositories/task-repository';
+import { ClassTaskRepository } from '../../repositories/class-task-repository';
+import { ClassRepository } from '../../repositories/class-repository';
 import { ITask } from '../../entities/Task';
 
 @Injectable()
 export class TaskService {
-  constructor(private readonly taskRepository: TaskRepository) {}
+  constructor(
+    private readonly taskRepository: TaskRepository,
+    private readonly classTaskRepository: ClassTaskRepository,
+    private readonly classRepository: ClassRepository,
+  ) {}
 
   async create(data: ICreateTaskDTO & { creatorId: string }) {
-    return await this.taskRepository.create(data);
+    const { classIds } = data;
+    const task = await this.taskRepository.create(data);
+
+    // Create class-task relations if classIds provided
+    if (classIds && classIds.length > 0) {
+      for (const classId of classIds) {
+        // Verify user owns the class
+        const classData = await this.classRepository.getById(classId);
+        if (classData && classData.professorId === data.creatorId) {
+          await this.classTaskRepository.create({
+            classId,
+            taskId: task.taskId,
+          });
+        }
+      }
+    }
+
+    return task;
   }
 
-  async getById(id: string): Promise<ITask | null> {
-    return await this.taskRepository.getById(id);
+  async getById(id: string): Promise<(ITask & { classTasks?: any[] }) | null> {
+    const task = await this.taskRepository.getById(id);
+    if (!task) return null;
+
+    const classTasks = await this.classTaskRepository.getByTaskId(id);
+    return {
+      ...task,
+      classTasks,
+    };
   }
 
   async getAll(query: IGetTasksQuery) {
@@ -46,7 +76,41 @@ export class TaskService {
       );
     }
 
-    return await this.taskRepository.update(taskId, data);
+    const { classIds, ...taskData } = data;
+
+    // Handle class-task relations if classIds provided
+    if (classIds !== undefined) {
+      // Get current class-task relations
+      const currentClassTasks =
+        await this.classTaskRepository.getByTaskId(taskId);
+      const currentClassIds = currentClassTasks.map((ct) => ct.classId);
+
+      // Remove class-tasks that are no longer in the list
+      for (const classId of currentClassIds) {
+        if (!classIds.includes(classId)) {
+          await this.classTaskRepository.delete(classId, taskId);
+        }
+      }
+
+      // Add new class-tasks
+      for (const classId of classIds) {
+        if (!currentClassIds.includes(classId)) {
+          // Verify user owns the class
+          const classData = await this.classRepository.getById(classId);
+          if (
+            classData &&
+            (classData.professorId === userId || userRole === 'ADMIN')
+          ) {
+            await this.classTaskRepository.create({
+              classId,
+              taskId,
+            });
+          }
+        }
+      }
+    }
+
+    return await this.taskRepository.update(taskId, taskData);
   }
 
   async delete(taskId: string, userId: string, userRole: string) {

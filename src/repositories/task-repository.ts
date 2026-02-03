@@ -8,6 +8,7 @@ import { ITask } from '../entities/Task';
 export abstract class TaskRepository {
   abstract create(data: ICreateTaskDTO): Promise<any>;
   abstract getById(taskId: string): Promise<ITask | null>;
+  abstract getByIds(taskIds: string[]): Promise<ITask[]>;
   abstract getAll(
     query: IGetTasksQuery,
   ): Promise<{ tasks: ITask[]; total: number }>;
@@ -49,6 +50,19 @@ export class PrismaTaskRepository implements TaskRepository {
   async getById(taskId: string): Promise<ITask | null> {
     return prisma.task.findUnique({
       where: { taskId, deletedAt: null },
+      include: {
+        taskParams: true,
+        taskTests: true,
+      },
+    });
+  }
+
+  async getByIds(taskIds: string[]): Promise<ITask[]> {
+    return prisma.task.findMany({
+      where: {
+        taskId: { in: taskIds },
+        deletedAt: null,
+      },
       include: {
         taskParams: true,
         taskTests: true,

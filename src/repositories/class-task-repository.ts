@@ -24,6 +24,10 @@ export interface IClassTaskWithRelations extends ClassTask {
 
 export abstract class ClassTaskRepository {
   abstract create(data: ICreateClassTaskDTO): Promise<ClassTask>;
+  abstract createMany(
+    classId: string,
+    taskIds: string[],
+  ): Promise<{ count: number }>;
   abstract getByIds(
     classId: string,
     taskId: string,
@@ -32,8 +36,17 @@ export abstract class ClassTaskRepository {
     classId: string,
     query: IGetClassTasksQuery,
   ): Promise<{ classTasks: IClassTaskWithRelations[]; total: number }>;
+  abstract getByTaskId(taskId: string): Promise<IClassTaskWithRelations[]>;
   abstract delete(classId: string, taskId: string): Promise<void>;
+  abstract deleteMany(
+    classId: string,
+    taskIds: string[],
+  ): Promise<{ count: number }>;
   abstract isTaskInClass(classId: string, taskId: string): Promise<boolean>;
+  abstract getTasksInClass(
+    classId: string,
+    taskIds: string[],
+  ): Promise<string[]>;
 }
 
 @Injectable()
@@ -58,6 +71,28 @@ export class PrismaClassTaskRepository implements ClassTaskRepository {
         throw new ApplicationError(
           400,
           'Erro ao associar tarefa à turma',
+          error,
+        );
+      }
+      throw error;
+    }
+  }
+
+  async createMany(
+    classId: string,
+    taskIds: string[],
+  ): Promise<{ count: number }> {
+    try {
+      const result = await prisma.classTask.createMany({
+        data: taskIds.map((taskId) => ({ classId, taskId })),
+        skipDuplicates: true,
+      });
+      return { count: result.count };
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        throw new ApplicationError(
+          400,
+          'Erro ao associar tarefas à turma',
           error,
         );
       }
@@ -158,5 +193,56 @@ export class PrismaClassTaskRepository implements ClassTaskRepository {
       },
     });
     return !!classTask;
+  }
+
+  async deleteMany(
+    classId: string,
+    taskIds: string[],
+  ): Promise<{ count: number }> {
+    try {
+      const result = await prisma.classTask.deleteMany({
+        where: {
+          classId,
+          taskId: { in: taskIds },
+        },
+      });
+      return { count: result.count };
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        throw new ApplicationError(
+          400,
+          'Erro ao remover tarefas da turma',
+          error,
+        );
+      }
+      throw error;
+    }
+  }
+
+  async getTasksInClass(classId: string, taskIds: string[]): Promise<string[]> {
+    const classTasks = await prisma.classTask.findMany({
+      where: {
+        classId,
+        taskId: { in: taskIds },
+      },
+      select: { taskId: true },
+    });
+    return classTasks.map((ct) => ct.taskId);
+  }
+
+  async getByTaskId(taskId: string): Promise<IClassTaskWithRelations[]> {
+    return await prisma.classTask.findMany({
+      where: { taskId },
+      include: {
+        class: {
+          select: {
+            classId: true,
+            name: true,
+            code: true,
+            professorId: true,
+          },
+        },
+      },
+    });
   }
 }

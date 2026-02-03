@@ -5,6 +5,14 @@ import {
   PrismaTaskRepository,
   TaskRepository,
 } from '../../repositories/task-repository';
+import {
+  PrismaClassTaskRepository,
+  ClassTaskRepository,
+} from '../../repositories/class-task-repository';
+import {
+  PrismaClassRepository,
+  ClassRepository,
+} from '../../repositories/class-repository';
 
 @Module({
   controllers: [TaskController],
@@ -13,6 +21,14 @@ import {
     {
       provide: TaskRepository,
       useClass: PrismaTaskRepository,
+    },
+    {
+      provide: ClassTaskRepository,
+      useClass: PrismaClassTaskRepository,
+    },
+    {
+      provide: ClassRepository,
+      useClass: PrismaClassRepository,
     },
   ],
 })
