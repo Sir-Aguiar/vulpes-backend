@@ -48,7 +48,8 @@ export class TaskController {
       validatedQuery.isVisible = 'true';
     }
     if (user.role === 'PROFESSOR') {
-      validatedQuery.custom = `{"OR": [{ "isPublic": true, "isVisible": true }, { "creatorId": "${user.userId}" }]}`;
+      validatedQuery.creatorId = user.userId;
+      validatedQuery.includePublicVisible = true;
     }
     const result = await this.taskService.getAll(validatedQuery);
 

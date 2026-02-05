@@ -66,7 +66,9 @@ export const GetTasksQuerySchema = Zod.object({
   creatorId: Zod.string().optional(),
   isPublic: Zod.string().optional(),
   isVisible: Zod.string().optional(),
-  custom: Zod.string().optional(),
+  includePublicVisible: Zod.union([Zod.string(), Zod.boolean()])
+    .optional()
+    .transform((val) => val === true || val === 'true'),
   search: Zod.string().optional(),
 });
 

@@ -25,18 +25,20 @@ export class TaskService {
     const { classIds } = data;
     const task = await this.taskRepository.create(data);
 
-    // Create class-task relations if classIds provided
     if (classIds && classIds.length > 0) {
-      for (const classId of classIds) {
-        // Verify user owns the class
-        const classData = await this.classRepository.getById(classId);
-        if (classData && classData.professorId === data.creatorId) {
-          await this.classTaskRepository.create({
+      const classes = await this.classRepository.getByIds(classIds);
+      const ownedClassIds = classes
+        .filter((classItem) => classItem.professorId === data.creatorId)
+        .map((classItem) => classItem.classId);
+
+      await Promise.all(
+        ownedClassIds.map((classId) =>
+          this.classTaskRepository.create({
             classId,
             taskId: task.taskId,
-          });
-        }
-      }
+          }),
+        ),
+      );
     }
 
     return task;
@@ -93,20 +95,27 @@ export class TaskService {
       }
 
       // Add new class-tasks
-      for (const classId of classIds) {
-        if (!currentClassIds.includes(classId)) {
-          // Verify user owns the class
-          const classData = await this.classRepository.getById(classId);
-          if (
-            classData &&
-            (classData.professorId === userId || userRole === 'ADMIN')
-          ) {
-            await this.classTaskRepository.create({
+      const classIdsToAdd = classIds.filter(
+        (classId) => !currentClassIds.includes(classId),
+      );
+
+      if (classIdsToAdd.length > 0) {
+        const classes = await this.classRepository.getByIds(classIdsToAdd);
+        const allowedClassIds = classes
+          .filter(
+            (classItem) =>
+              classItem.professorId === userId || userRole === 'ADMIN',
+          )
+          .map((classItem) => classItem.classId);
+
+        await Promise.all(
+          allowedClassIds.map((classId) =>
+            this.classTaskRepository.create({
               classId,
               taskId,
-            });
-          }
-        }
+            }),
+          ),
+        );
       }
     }
 

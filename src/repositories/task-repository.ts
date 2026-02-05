@@ -73,34 +73,46 @@ export class PrismaTaskRepository implements TaskRepository {
   async getAll(
     query: IGetTasksQuery,
   ): Promise<{ tasks: ITask[]; total: number }> {
-    const { page, limit, creatorId, isPublic, isVisible, search } = query;
+    const {
+      page,
+      limit,
+      creatorId,
+      isPublic,
+      isVisible,
+      includePublicVisible,
+      search,
+    } = query;
     const skip = (page - 1) * limit;
-
-    let where: any = {
-      deletedAt: null,
-    };
-
-    if (creatorId) {
-      where.creatorId = creatorId;
-    }
-
-    if (isPublic !== undefined) {
-      where.isPublic = isPublic === 'true';
-    }
-
-    if (isVisible !== undefined) {
-      where.isVisible = isVisible === 'true';
-    }
+    const and: any[] = [{ deletedAt: null }];
 
     if (search) {
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-      ];
+      and.push({
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+        ],
+      });
     }
-    if (query.custom) {
-      where = { ...where, ...JSON.parse(query.custom) };
+
+    if (creatorId && includePublicVisible) {
+      and.push({
+        OR: [{ isPublic: true, isVisible: true }, { creatorId }],
+      });
+    } else {
+      if (creatorId) {
+        and.push({ creatorId });
+      }
+
+      if (isPublic !== undefined) {
+        and.push({ isPublic: isPublic === 'true' });
+      }
+
+      if (isVisible !== undefined) {
+        and.push({ isVisible: isVisible === 'true' });
+      }
     }
+
+    const where = { AND: and };
     const [tasks, total] = await Promise.all([
       prisma.task.findMany({
         where,

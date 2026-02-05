@@ -27,6 +27,7 @@ export abstract class ClassRepository {
     data: ICreateClassDTO & { professorId: string; code: number },
   ): Promise<Class>;
   abstract getById(classId: string): Promise<IClassWithRelations | null>;
+  abstract getByIds(classIds: string[]): Promise<IClassWithRelations[]>;
   abstract getByCode(code: number): Promise<IClassWithRelations | null>;
   abstract getAll(
     query: IGetClassesQuery,
@@ -85,6 +86,12 @@ export class PrismaClassRepository implements ClassRepository {
           },
         },
       },
+    });
+  }
+
+  async getByIds(classIds: string[]): Promise<IClassWithRelations[]> {
+    return await prisma.class.findMany({
+      where: { classId: { in: classIds } },
     });
   }
 
@@ -182,19 +189,22 @@ export class PrismaClassRepository implements ClassRepository {
     }
   }
 
-  async generateUniqueCode(): Promise<number> {
-    let code: number;
-    let exists = true;
-
-    while (exists) {
-      code = Math.floor(1000 + Math.random() * 8999);
+  async generateUniqueCode(maxAttempts: number = 10): Promise<number> {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const code = Math.floor(1000 + Math.random() * 8999);
       const existingClass = await prisma.class.findUnique({
         where: { code },
+        select: { code: true },
       });
-      exists = !!existingClass;
+
+      if (!existingClass) {
+        return code;
+      }
     }
 
-    return code!;
+    throw new Error(
+      'Não foi possível gerar um código único após múltiplas tentativas',
+    );
   }
 
   async getClassesByStudentId(

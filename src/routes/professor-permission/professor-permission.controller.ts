@@ -1,8 +1,12 @@
 import {
+  BadRequestException,
   Body,
   Controller,
+  FileTypeValidator,
   Get,
+  MaxFileSizeValidator,
   Param,
+  ParseFilePipe,
   Patch,
   Post,
   UploadedFile,
@@ -35,15 +39,31 @@ export class ProfessorPermissionController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STUDENT)
-  @UseInterceptors(FileInterceptor('document'))
+  @UseInterceptors(
+    FileInterceptor('document', {
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
   async create(
     @Body() body: any,
-    @UploadedFile() document: Express.Multer.File,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /(pdf|doc|docx|jpg|jpeg|png)$/ }),
+        ],
+      }),
+    )
+    document: Express.Multer.File,
   ) {
     const BodySchema = CreateProfessorPermissionSchema.omit({
       requestFileUrl: true,
     });
     const validatedBody = BodySchema.parse(body);
+
+    if (!document) {
+      throw new BadRequestException('Documento é obrigatório');
+    }
 
     const { url } = await this.storageService.uploadFile(document);
 

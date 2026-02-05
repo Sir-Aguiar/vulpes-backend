@@ -11,11 +11,17 @@ import {
 } from '../../repositories/user-repository';
 import { StringValue } from 'ms';
 
+const jwtSecret = process.env.JWT_SECRET;
+
+if (!jwtSecret) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
+
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'your-secret-key-change-this',
+      secret: jwtSecret,
       signOptions: {
         expiresIn: (process.env.JWT_EXPIRATION as StringValue) || '7D',
       },
