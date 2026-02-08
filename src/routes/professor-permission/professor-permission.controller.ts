@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Body,
   Controller,
-  FileTypeValidator,
   Get,
   MaxFileSizeValidator,
   Param,
@@ -21,6 +20,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
+import { CustomFileTypeValidator } from '../../validators/custom-file-type.validator';
 
 @Controller('professor-permission-request')
 export class ProfessorPermissionController {
@@ -50,7 +50,15 @@ export class ProfessorPermissionController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
-          new FileTypeValidator({ fileType: /(pdf|doc|docx|jpg|jpeg|png)$/ }),
+          new CustomFileTypeValidator({
+            allowedTypes: [
+              'application/pdf',
+              'application/msword',
+              'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+              'image/jpeg',
+              'image/png',
+            ],
+          }),
         ],
       }),
     )
