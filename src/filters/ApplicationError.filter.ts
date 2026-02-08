@@ -11,7 +11,9 @@ export class ApplicationErrorFilter implements ExceptionFilter {
 
     response.status(exception.status).json({
       error: {
-        ...exception,
+        status: exception.status,
+        message: exception.message,
+        name: exception.name,
         timestamp: new Date().toISOString(),
         path: request.url,
       },

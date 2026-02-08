@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { prisma } from '../database/prismaClient';
-import { ICreateTaskDTO } from '../dtos/Task';
+import { ICreateTaskDTO, IGetTasksQuery, IUpdateTaskDTO } from '../dtos/Task';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { ApplicationError } from '../entities/errors/ApplicationError';
 import { ITask } from '../entities/Task';
@@ -8,6 +8,14 @@ import { ITask } from '../entities/Task';
 export abstract class TaskRepository {
   abstract create(data: ICreateTaskDTO): Promise<any>;
   abstract getById(taskId: string): Promise<ITask | null>;
+  abstract getByIds(taskIds: string[]): Promise<ITask[]>;
+  abstract getAll(
+    query: IGetTasksQuery,
+  ): Promise<{ tasks: ITask[]; total: number }>;
+  abstract update(taskId: string, data: IUpdateTaskDTO): Promise<ITask>;
+  abstract delete(taskId: string, soft?: boolean): Promise<void>;
+  abstract getByCreatorId(creatorId: string): Promise<ITask[]>;
+  abstract getSubmissionCount(taskId: string): Promise<number>;
 }
 
 @Injectable()
@@ -16,12 +24,11 @@ export class PrismaTaskRepository implements TaskRepository {
     taskParams,
     testCases,
     ...data
-  }: ICreateTaskDTO): Promise<any> {
+  }: ICreateTaskDTO & { creatorId: string }): Promise<any> {
     try {
       return prisma.task.create({
         data: {
           ...data,
-          inputMode: data.inputMode as any,
           taskParams: {
             create: taskParams,
           },
@@ -35,18 +42,170 @@ export class PrismaTaskRepository implements TaskRepository {
       });
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
-        throw new ApplicationError(500, 'Erro ao criar tarefa', error);
+        throw new ApplicationError(400, 'Erro ao criar tarefa', error);
       }
     }
   }
 
   async getById(taskId: string): Promise<ITask | null> {
     return prisma.task.findUnique({
-      where: { taskId },
+      where: { taskId, deletedAt: null },
       include: {
         taskParams: true,
         taskTests: true,
       },
+    });
+  }
+
+  async getByIds(taskIds: string[]): Promise<ITask[]> {
+    return prisma.task.findMany({
+      where: {
+        taskId: { in: taskIds },
+        deletedAt: null,
+      },
+      include: {
+        taskParams: true,
+        taskTests: true,
+      },
+    });
+  }
+
+  async getAll(
+    query: IGetTasksQuery,
+  ): Promise<{ tasks: ITask[]; total: number }> {
+    const {
+      page,
+      limit,
+      creatorId,
+      isPublic,
+      isVisible,
+      includePublicVisible,
+      search,
+    } = query;
+    const skip = (page - 1) * limit;
+    const and: any[] = [{ deletedAt: null }];
+
+    if (search) {
+      and.push({
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    if (creatorId && includePublicVisible) {
+      and.push({
+        OR: [{ isPublic: true, isVisible: true }, { creatorId }],
+      });
+    } else {
+      if (creatorId) {
+        and.push({ creatorId });
+      }
+
+      if (isPublic !== undefined) {
+        and.push({ isPublic: isPublic === 'true' });
+      }
+
+      if (isVisible !== undefined) {
+        and.push({ isVisible: isVisible === 'true' });
+      }
+    }
+
+    const where = { AND: and };
+    const [tasks, total] = await Promise.all([
+      prisma.task.findMany({
+        where,
+        include: {
+          taskParams: true,
+          taskTests: true,
+        },
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.task.count({ where }),
+    ]);
+
+    return { tasks, total };
+  }
+
+  async update(taskId: string, data: IUpdateTaskDTO): Promise<ITask> {
+    const { taskParams, taskTests, ...taskData } = data;
+
+    return await prisma.$transaction(async (tx) => {
+      await tx.task.update({
+        where: { taskId },
+        data: taskData,
+      });
+
+      if (taskParams) {
+        await tx.taskParam.deleteMany({
+          where: { taskId },
+        });
+
+        await tx.taskParam.createMany({
+          data: taskParams.map((param) => ({
+            taskId,
+            name: param.name,
+            type: param.type,
+            isArray: param.isArray,
+          })),
+        });
+      }
+
+      if (taskTests) {
+        await tx.taskTest.deleteMany({
+          where: { taskId },
+        });
+
+        await tx.taskTest.createMany({
+          data: taskTests.map((test) => ({
+            taskId,
+            input: [JSON.stringify(test.input)],
+            expectedOutput: test.expectedOutput,
+            expectedOutputType: test.expectedOutputType,
+          })),
+        });
+      }
+
+      return tx.task.findUnique({
+        where: { taskId },
+        include: {
+          taskParams: true,
+          taskTests: true,
+        },
+      }) as Promise<ITask>;
+    });
+  }
+
+  async delete(taskId: string, soft: boolean = false): Promise<void> {
+    if (soft) {
+      await prisma.task.update({
+        where: { taskId },
+        data: { deletedAt: new Date() },
+      });
+    } else {
+      await prisma.task.delete({
+        where: { taskId },
+      });
+    }
+  }
+
+  async getByCreatorId(creatorId: string): Promise<ITask[]> {
+    return prisma.task.findMany({
+      where: { creatorId, deletedAt: null },
+      include: {
+        taskParams: true,
+        taskTests: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getSubmissionCount(taskId: string): Promise<number> {
+    return await prisma.submission.count({
+      where: { taskId },
     });
   }
 }
