@@ -23,6 +23,8 @@ export class PrismaTaskRepository implements TaskRepository {
   async create({
     taskParams,
     testCases,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    classIds,
     ...data
   }: ICreateTaskDTO & { creatorId: string }): Promise<any> {
     try {

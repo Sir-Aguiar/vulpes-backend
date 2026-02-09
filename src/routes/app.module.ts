@@ -12,6 +12,7 @@ import { StudentClassPermissionRequestModule } from './student-class-permission-
 import { ClassTaskModule } from './class-task/class-task.module';
 import { ListModule } from './list/list.module';
 import { ClassTaskListModule } from './class-task-list/class-task-list.module';
+import { InstitutionModule } from './institution/institution.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ClassTaskListModule } from './class-task-list/class-task-list.module';
     ClassTaskModule,
     ListModule,
     ClassTaskListModule,
+    InstitutionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -23,7 +23,8 @@ export class TaskService {
 
   async create(data: ICreateTaskDTO & { creatorId: string }) {
     const { classIds } = data;
-    const task = await this.taskRepository.create(data);
+
+    const task = await this.taskRepository.create({ ...data });
 
     if (classIds && classIds.length > 0) {
       const classes = await this.classRepository.getByIds(classIds);
