@@ -9,6 +9,7 @@ export const SignupSchema = Zod.object({
   name: Zod.string().min(3, 'O nome de usuário deve ter ao menos 3 caracteres'),
   email: Zod.email('Email inválido'),
   password: Zod.string().min(6, 'A senha deve ter ao menos 6 caracteres'),
+  institutionId: Zod.number().optional(),
 });
 
 export type ILoginDTO = Zod.infer<typeof LoginSchema>;

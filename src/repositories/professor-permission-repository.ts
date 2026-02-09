@@ -29,11 +29,14 @@ export class PrismaProfessorPermissionRepository implements ProfessorPermissionR
   async getById(id: number): Promise<ProfessorPermissionRequest | null> {
     return await prisma.professorPermissionRequest.findUnique({
       where: { professorPermissionRequestId: id },
+      include: { institution: true },
     });
   }
 
   async getAll(): Promise<ProfessorPermissionRequest[]> {
-    return await prisma.professorPermissionRequest.findMany();
+    return await prisma.professorPermissionRequest.findMany({
+      include: { institution: true },
+    });
   }
 
   async update(

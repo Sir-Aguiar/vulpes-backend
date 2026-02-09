@@ -44,7 +44,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
-        institution: 1,
+        institutionId: user.institutionId,
       },
     };
   }
@@ -74,7 +74,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
-        institution: 1,
+        institutionId: user.institutionId,
       },
     };
   }
