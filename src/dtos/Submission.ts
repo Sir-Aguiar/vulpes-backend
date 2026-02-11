@@ -7,4 +7,9 @@ export const CreateSubmissionSchema = Zod.object({
   isCorrect: Zod.boolean().default(false),
 });
 
+export const SendFeedbackSchema = Zod.object({
+  professorComments: Zod.string().optional(),
+});
+
 export type ICreateSubmissionDTO = Zod.infer<typeof CreateSubmissionSchema>;
+export type ISendFeedbackDTO = Zod.infer<typeof SendFeedbackSchema>;

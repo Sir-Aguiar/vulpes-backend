@@ -1,4 +1,13 @@
-import { Body, Controller, Post, UseGuards, UsePipes } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+  UsePipes,
+} from '@nestjs/common';
 import { SubmissionService } from './submission.service';
 import { ZodValidationPipe } from '../../pipes/Zod.pipe';
 import * as Submission from '../../dtos/Submission';
@@ -27,6 +36,27 @@ export class SubmissionController {
   ) {
     body.studentId = user.userId;
     const result = await this.submissionService.create(body);
+    return result;
+  }
+
+  @Get('task/:taskId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PROFESSOR, Role.ADMIN)
+  async getByTaskId(@Param('taskId') taskId: string) {
+    const result = await this.submissionService.getByTaskId(taskId);
+    return result;
+  }
+
+  @Put('feedback/:id')
+  @UsePipes()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PROFESSOR, Role.ADMIN)
+  async sendFeedback(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(Submission.SendFeedbackSchema))
+    body: Submission.ISendFeedbackDTO,
+  ) {
+    const result = await this.submissionService.sendFeedback(id, body);
     return result;
   }
 }
