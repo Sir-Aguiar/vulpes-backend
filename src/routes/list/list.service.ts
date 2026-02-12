@@ -116,13 +116,45 @@ export class ListService {
 
   async getById(listId: string, userId: string, userRole: string) {
     const list = await this.listRepository.getById(listId);
+
     if (!list) {
       throw new NotFoundException('Lista não encontrada');
     }
+
     const isStudentInClass = await this.classStudentRepository.isStudentInClass(
       list.classId,
       userId,
     );
+    if (
+      list.class?.professorId !== userId &&
+      userRole !== 'ADMIN' &&
+      !isStudentInClass
+    ) {
+      throw new ForbiddenException(
+        'Você não tem permissão para ver esta lista',
+      );
+    }
+
+    return list;
+  }
+
+  async getByIdAndTaskId(
+    listId: string,
+    taskId: string,
+    userId: string,
+    userRole: string,
+  ) {
+    const list = await this.listRepository.getByIdAndTaskId(listId, taskId);
+
+    if (!list) {
+      throw new NotFoundException('Lista não encontrada');
+    }
+
+    const isStudentInClass = await this.classStudentRepository.isStudentInClass(
+      list.classId,
+      userId,
+    );
+
     if (
       list.class?.professorId !== userId &&
       userRole !== 'ADMIN' &&

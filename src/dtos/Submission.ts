@@ -3,6 +3,7 @@ import * as Zod from 'zod';
 export const CreateSubmissionSchema = Zod.object({
   studentId: Zod.string().min(1, 'Defina o ID do estudante'),
   taskId: Zod.string().min(1, 'Defina o ID da tarefa'),
+  listId: Zod.string().optional(),
   code: Zod.string().min(1, 'Defina o código submetido'),
   isCorrect: Zod.boolean().default(false),
 });

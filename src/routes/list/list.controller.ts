@@ -64,6 +64,22 @@ export class ListController {
     return this.listService.getById(id, user.userId, user.role);
   }
 
+  @Get(':listId/:taskId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STUDENT, Role.PROFESSOR, Role.ADMIN)
+  async getListByIdAndTaskId(
+    @Param('listId') listId: string,
+    @Param('taskId') taskId: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.listService.getByIdAndTaskId(
+      listId,
+      taskId,
+      user.userId,
+      user.role,
+    );
+  }
+
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.PROFESSOR, Role.ADMIN)

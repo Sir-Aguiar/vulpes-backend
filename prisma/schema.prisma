@@ -113,12 +113,15 @@ model Submission {
   submissionId      String   @id @default(uuid())
   studentId         String
   taskId            String
+  listId            String?
   code              String   @db.Text
   isCorrect         Boolean  @default(false)
   submittedAt       DateTime @default(now())
   professorComments String?  @db.Text
-  task              Task     @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
-  student           User     @relation(fields: [studentId], references: [userId], onDelete: Cascade)
+
+  task    Task  @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+  student User  @relation(fields: [studentId], references: [userId], onDelete: Cascade)
+  list    List? @relation(fields: [listId], references: [listId], onDelete: SetNull)
 }
 
 model Class {
@@ -183,6 +186,7 @@ model List {
   class           Class    @relation(fields: [classId], references: [classId], onDelete: Cascade)
 
   classTaskLists ClassTaskList[]
+  submissions    Submission[]
 }
 
 model ClassTaskList {

@@ -20,6 +20,10 @@ export interface IListWithRelations extends List {
 export abstract class ListRepository {
   abstract create(data: ICreateListDTO): Promise<List>;
   abstract getById(listId: string): Promise<IListWithRelations | null>;
+  abstract getByIdAndTaskId(
+    listId: string,
+    taskId: string,
+  ): Promise<IListWithRelations | null>;
   abstract getByClassId(
     classId: string,
     query: IGetListsQuery,
@@ -60,6 +64,32 @@ export class PrismaListRepository implements ListRepository {
             professorId: true,
           },
         },
+        submissions: true,
+        _count: {
+          select: {
+            classTaskLists: true,
+          },
+        },
+      },
+    });
+  }
+
+  async getByIdAndTaskId(
+    listId: string,
+    taskId: string,
+  ): Promise<IListWithRelations | null> {
+    return await prisma.list.findUnique({
+      where: { listId, submissions: { every: { taskId } } },
+      include: {
+        class: {
+          select: {
+            classId: true,
+            name: true,
+            code: true,
+            professorId: true,
+          },
+        },
+        submissions: true,
         _count: {
           select: {
             classTaskLists: true,
