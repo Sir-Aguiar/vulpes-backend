@@ -60,7 +60,7 @@ export class ClassTaskListService {
     return await this.classTaskListRepository.create(data);
   }
 
-  async getByListId(
+  async getTasksByListId(
     listId: string,
     query: IGetClassTaskListsQuery,
     userId: string,
@@ -75,11 +75,10 @@ export class ClassTaskListService {
       list.classId,
       userId,
     );
-    if (
-      list.class?.professorId !== userId &&
-      userRole !== 'ADMIN' &&
-      !isStudentInClass
-    ) {
+
+    const isOwner = list.class?.professorId !== userId;
+
+    if (!isOwner && userRole !== 'ADMIN' && !isStudentInClass) {
       throw new ForbiddenException(
         'Você não tem permissão para ver as tarefas desta lista',
       );
@@ -90,27 +89,11 @@ export class ClassTaskListService {
       query,
     );
 
-    const formattedClassTaskLists = result.classTaskLists.map((ctl: any) => ({
-      ...ctl,
-      classTask: ctl.classTask
-        ? {
-            ...ctl.classTask,
-            task: ctl.classTask.task
-              ? {
-                  ...ctl.classTask.task,
-                  taskTests: ctl.classTask.task.taskTests?.map(
-                    (testCase: any) => ({
-                      ...testCase,
-                      input: JSON.parse(testCase.input),
-                    }),
-                  ),
-                }
-              : null,
-          }
-        : null,
+    const tasks = result.classTaskLists.map(({ classTask }) => ({
+      ...classTask?.task,
     }));
 
-    return { classTaskLists: formattedClassTaskLists, total: result.total };
+    return { tasks, total: result.total };
   }
 
   async delete(

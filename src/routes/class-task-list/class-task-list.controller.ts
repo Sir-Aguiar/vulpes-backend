@@ -32,7 +32,7 @@ export class ClassTaskListController {
     return this.classTaskListService.create(body, user.userId, user.role);
   }
 
-  @Get('list/:listId')
+  @Get('task/:listId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STUDENT, Role.PROFESSOR, Role.ADMIN)
   async getTasksByListId(
@@ -41,14 +41,15 @@ export class ClassTaskListController {
     query: ClassTaskListDTO.IGetClassTaskListsQuery,
     @CurrentUser() user: any,
   ) {
-    const result = await this.classTaskListService.getByListId(
+    const result = await this.classTaskListService.getTasksByListId(
       listId,
       query,
       user.userId,
       user.role,
     );
+
     return {
-      classTaskLists: result.classTaskLists,
+      tasks: result.tasks,
       total: result.total,
       page: query.page,
       limit: query.limit,
