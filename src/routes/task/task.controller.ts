@@ -47,10 +47,12 @@ export class TaskController {
       validatedQuery.isPublic = 'true';
       validatedQuery.isVisible = 'true';
     }
+
     if (user.role === 'PROFESSOR') {
       validatedQuery.creatorId = user.userId;
       validatedQuery.includePublicVisible = true;
     }
+
     const result = await this.taskService.getAll(validatedQuery);
 
     const formattedTasks = result.tasks.map((task: any) => ({
