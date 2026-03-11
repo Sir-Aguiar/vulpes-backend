@@ -3,7 +3,7 @@ import { ClassTaskListController } from './class-task-list.controller';
 import { ClassTaskListService } from './class-task-list.service';
 import {
   PrismaClassTaskListRepository,
-  ClassTaskListRepository,
+  TaskListRepository,
 } from '../../repositories/class-task-list-repository';
 import {
   PrismaListRepository,
@@ -27,7 +27,7 @@ import {
   providers: [
     ClassTaskListService,
     {
-      provide: ClassTaskListRepository,
+      provide: TaskListRepository,
       useClass: PrismaClassTaskListRepository,
     },
     {

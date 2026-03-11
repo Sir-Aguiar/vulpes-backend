@@ -13,7 +13,7 @@ export interface IListWithRelations extends List {
     professorId: string;
   };
   _count?: {
-    classTaskLists: number;
+    taskLists: number;
   };
 }
 
@@ -67,7 +67,7 @@ export class PrismaListRepository implements ListRepository {
         submissions: true,
         _count: {
           select: {
-            classTaskLists: true,
+            taskLists: true,
           },
         },
       },
@@ -92,7 +92,7 @@ export class PrismaListRepository implements ListRepository {
         submissions: true,
         _count: {
           select: {
-            classTaskLists: true,
+            taskLists: true,
           },
         },
       },
@@ -120,7 +120,7 @@ export class PrismaListRepository implements ListRepository {
           },
           _count: {
             select: {
-              classTaskLists: true,
+              taskLists: true,
             },
           },
         },

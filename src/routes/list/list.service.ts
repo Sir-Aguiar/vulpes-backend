@@ -8,7 +8,7 @@ import { ListRepository } from '../../repositories/list-repository';
 import { ClassRepository } from '../../repositories/class-repository';
 import { ClassStudentRepository } from '../../repositories/class-student-repository';
 import { ClassTaskRepository } from '../../repositories/class-task-repository';
-import { ClassTaskListRepository } from '../../repositories/class-task-list-repository';
+import { TaskListRepository } from '../../repositories/class-task-list-repository';
 import { TaskRepository } from '../../repositories/task-repository';
 import {
   ICreateListDTO,
@@ -23,7 +23,7 @@ export class ListService {
     private readonly classRepository: ClassRepository,
     private readonly classStudentRepository: ClassStudentRepository,
     private readonly classTaskRepository: ClassTaskRepository,
-    private readonly classTaskListRepository: ClassTaskListRepository,
+    private readonly classTaskListRepository: TaskListRepository,
     private readonly taskRepository: TaskRepository,
   ) {}
 
@@ -31,6 +31,7 @@ export class ListService {
     const { taskIds, ...listData } = data;
 
     const classData = await this.classRepository.getById(listData.classId);
+
     if (!classData) {
       throw new NotFoundException('Turma não encontrada');
     }
@@ -41,9 +42,9 @@ export class ListService {
       );
     }
 
-    // If taskIds provided, validate them
     if (taskIds && taskIds.length > 0) {
       const tasks = await this.taskRepository.getByIds(taskIds);
+
       if (tasks.length !== taskIds.length) {
         const foundIds = tasks.map((t) => t.taskId);
         const missingIds = taskIds.filter((id) => !foundIds.includes(id));
@@ -78,7 +79,6 @@ export class ListService {
       }
     }
 
-    // Create the list
     const list = await this.listRepository.create(listData);
 
     // If taskIds provided, add them to the list
@@ -101,11 +101,7 @@ export class ListService {
       }
 
       // Add all tasks to the list
-      await this.classTaskListRepository.createMany(
-        listData.classId,
-        list.listId,
-        taskIds,
-      );
+      await this.classTaskListRepository.createMany(list.listId, taskIds);
     }
 
     return {

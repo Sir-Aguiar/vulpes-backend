@@ -6,21 +6,17 @@ import {
   ICreateClassTaskListDTO,
   IGetClassTaskListsQuery,
 } from '../dtos/ClassTaskList';
-import { ClassTaskList } from '@prisma/client';
+import { TaskList } from '@prisma/client';
 
-export interface IClassTaskListWithRelations extends ClassTaskList {
-  classTask?: {
-    classId: string;
+export interface IClassTaskListWithRelations extends TaskList {
+  task?: {
     taskId: string;
-    task?: {
-      taskId: string;
-      title: string;
-      description: string;
-      isVisible: boolean;
-      isPublic: boolean;
-      taskParams?: any[];
-      taskTests?: any[];
-    };
+    title: string;
+    description: string;
+    isVisible: boolean;
+    isPublic: boolean;
+    taskParams?: any[];
+    taskTests?: any[];
   };
   list?: {
     listId: string;
@@ -31,15 +27,13 @@ export interface IClassTaskListWithRelations extends ClassTaskList {
   };
 }
 
-export abstract class ClassTaskListRepository {
-  abstract create(data: ICreateClassTaskListDTO): Promise<ClassTaskList>;
+export abstract class TaskListRepository {
+  abstract create(data: ICreateClassTaskListDTO): Promise<TaskList>;
   abstract createMany(
-    classId: string,
     listId: string,
     taskIds: string[],
   ): Promise<{ count: number }>;
   abstract getByIds(
-    classId: string,
     taskId: string,
     listId: string,
   ): Promise<IClassTaskListWithRelations | null>;
@@ -47,25 +41,19 @@ export abstract class ClassTaskListRepository {
     listId: string,
     query: IGetClassTaskListsQuery,
   ): Promise<{ classTaskLists: IClassTaskListWithRelations[]; total: number }>;
-  abstract delete(
-    classId: string,
-    taskId: string,
-    listId: string,
-  ): Promise<void>;
+  abstract delete(taskId: string, listId: string): Promise<void>;
   abstract deleteMany(
-    classId: string,
     listId: string,
     taskIds: string[],
   ): Promise<{ count: number }>;
 }
 
 @Injectable()
-export class PrismaClassTaskListRepository implements ClassTaskListRepository {
-  async create(data: ICreateClassTaskListDTO): Promise<ClassTaskList> {
+export class PrismaClassTaskListRepository implements TaskListRepository {
+  async create(data: ICreateClassTaskListDTO): Promise<TaskList> {
     try {
-      return await prisma.classTaskList.create({
+      return await prisma.taskList.create({
         data: {
-          classId: data.classId,
           taskId: data.taskId,
           listId: data.listId,
         },
@@ -90,13 +78,12 @@ export class PrismaClassTaskListRepository implements ClassTaskListRepository {
   }
 
   async createMany(
-    classId: string,
     listId: string,
     taskIds: string[],
   ): Promise<{ count: number }> {
     try {
-      const result = await prisma.classTaskList.createMany({
-        data: taskIds.map((taskId) => ({ classId, taskId, listId })),
+      const result = await prisma.taskList.createMany({
+        data: taskIds.map((taskId) => ({ taskId, listId })),
         skipDuplicates: true,
       });
       return { count: result.count };
@@ -113,23 +100,18 @@ export class PrismaClassTaskListRepository implements ClassTaskListRepository {
   }
 
   async getByIds(
-    classId: string,
     taskId: string,
     listId: string,
   ): Promise<IClassTaskListWithRelations | null> {
-    return await prisma.classTaskList.findUnique({
+    return await prisma.taskList.findUnique({
       where: {
-        classId_taskId_listId: { classId, taskId, listId },
+        taskId_listId: { taskId, listId },
       },
       include: {
-        classTask: {
+        task: {
           include: {
-            task: {
-              include: {
-                taskParams: true,
-                taskTests: true,
-              },
-            },
+            taskParams: true,
+            taskTests: true,
           },
         },
         list: true,
@@ -145,17 +127,13 @@ export class PrismaClassTaskListRepository implements ClassTaskListRepository {
     const skip = (page - 1) * limit;
 
     const [classTaskLists, total] = await Promise.all([
-      prisma.classTaskList.findMany({
+      prisma.taskList.findMany({
         where: { listId },
         include: {
-          classTask: {
+          task: {
             include: {
-              task: {
-                include: {
-                  taskParams: true,
-                  taskTests: true,
-                },
-              },
+              taskParams: true,
+              taskTests: true,
             },
           },
           list: true,
@@ -164,17 +142,17 @@ export class PrismaClassTaskListRepository implements ClassTaskListRepository {
         take: limit,
         orderBy: { createdAt: 'desc' },
       }),
-      prisma.classTaskList.count({ where: { listId } }),
+      prisma.taskList.count({ where: { listId } }),
     ]);
 
     return { classTaskLists, total };
   }
 
-  async delete(classId: string, taskId: string, listId: string): Promise<void> {
+  async delete(taskId: string, listId: string): Promise<void> {
     try {
-      await prisma.classTaskList.delete({
+      await prisma.taskList.delete({
         where: {
-          classId_taskId_listId: { classId, taskId, listId },
+          taskId_listId: { taskId, listId },
         },
       });
     } catch (error) {
@@ -197,14 +175,12 @@ export class PrismaClassTaskListRepository implements ClassTaskListRepository {
   }
 
   async deleteMany(
-    classId: string,
     listId: string,
     taskIds: string[],
   ): Promise<{ count: number }> {
     try {
-      const result = await prisma.classTaskList.deleteMany({
+      const result = await prisma.taskList.deleteMany({
         where: {
-          classId,
           listId,
           taskId: { in: taskIds },
         },

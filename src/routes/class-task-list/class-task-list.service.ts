@@ -4,7 +4,7 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
-import { ClassTaskListRepository } from '../../repositories/class-task-list-repository';
+import { TaskListRepository } from '../../repositories/class-task-list-repository';
 import { ListRepository } from '../../repositories/list-repository';
 import { ClassTaskRepository } from '../../repositories/class-task-repository';
 import { ClassStudentRepository } from '../../repositories/class-student-repository';
@@ -16,7 +16,7 @@ import {
 @Injectable()
 export class ClassTaskListService {
   constructor(
-    private readonly classTaskListRepository: ClassTaskListRepository,
+    private readonly classTaskListRepository: TaskListRepository,
     private readonly listRepository: ListRepository,
     private readonly classTaskRepository: ClassTaskRepository,
     private readonly classStudentRepository: ClassStudentRepository,
@@ -89,8 +89,8 @@ export class ClassTaskListService {
       query,
     );
 
-    const tasks = result.classTaskLists.map(({ classTask }) => ({
-      ...classTask?.task,
+    const tasks = result.classTaskLists.map(({ task }) => ({
+      ...task,
     }));
 
     return { tasks, total: result.total };
@@ -114,7 +114,7 @@ export class ClassTaskListService {
       );
     }
 
-    await this.classTaskListRepository.delete(classId, taskId, listId);
+    await this.classTaskListRepository.delete(taskId, listId);
     return { message: 'Tarefa removida da lista com sucesso' };
   }
 }

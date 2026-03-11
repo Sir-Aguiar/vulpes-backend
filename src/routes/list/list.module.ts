@@ -19,7 +19,7 @@ import {
 } from '../../repositories/class-task-repository';
 import {
   PrismaClassTaskListRepository,
-  ClassTaskListRepository,
+  TaskListRepository,
 } from '../../repositories/class-task-list-repository';
 import {
   PrismaTaskRepository,
@@ -47,7 +47,7 @@ import {
       useClass: PrismaClassTaskRepository,
     },
     {
-      provide: ClassTaskListRepository,
+      provide: TaskListRepository,
       useClass: PrismaClassTaskListRepository,
     },
     {
