@@ -64,6 +64,7 @@ model Task {
   creator     User         @relation(fields: [creatorId], references: [userId], onDelete: Cascade)
 
   classTasks ClassTask[]
+  taskLists  TaskList[]
 }
 
 model TaskParam {
@@ -109,6 +110,18 @@ model ProfessorPermissionRequest {
   @@map("professor_permission_requests")
 }
 
+model StudentClassPermissionRequest {
+  classId   String
+  studentId String
+  message   String?  @db.Text
+  createdAt DateTime @default(now())
+  class     Class    @relation(fields: [classId], references: [classId], onDelete: Cascade)
+  student   User     @relation(fields: [studentId], references: [userId], onDelete: Cascade)
+
+  @@id([classId, studentId])
+  @@map("student_class_permission_requests")
+}
+
 model Submission {
   submissionId      String   @id @default(uuid())
   studentId         String
@@ -152,25 +165,12 @@ model ClassStudent {
   @@id([classId, studentId])
 }
 
-model StudentClassPermissionRequest {
+model ClassTask {
   classId   String
-  studentId String
-  message   String?  @db.Text
+  taskId    String
   createdAt DateTime @default(now())
   class     Class    @relation(fields: [classId], references: [classId], onDelete: Cascade)
-  student   User     @relation(fields: [studentId], references: [userId], onDelete: Cascade)
-
-  @@id([classId, studentId])
-  @@map("student_class_permission_requests")
-}
-
-model ClassTask {
-  classId        String
-  taskId         String
-  createdAt      DateTime        @default(now())
-  class          Class           @relation(fields: [classId], references: [classId], onDelete: Cascade)
-  task           Task            @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
-  classTaskLists ClassTaskList[]
+  task      Task     @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
 
   @@id([classId, taskId])
 }
@@ -185,17 +185,16 @@ model List {
   updatedAt       DateTime @updatedAt
   class           Class    @relation(fields: [classId], references: [classId], onDelete: Cascade)
 
-  classTaskLists ClassTaskList[]
-  submissions    Submission[]
+  submissions Submission[]
+  taskLists   TaskList[]
 }
 
-model ClassTaskList {
-  classId   String
+model TaskList {
   taskId    String
   listId    String
-  createdAt DateTime  @default(now())
-  classTask ClassTask @relation(fields: [classId, taskId], references: [classId, taskId], onDelete: Cascade)
-  list      List      @relation(fields: [listId], references: [listId], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  list      List     @relation(fields: [listId], references: [listId], onDelete: Cascade)
+  task      Task     @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
 
-  @@id([classId, taskId, listId])
+  @@id([taskId, listId])
 }
