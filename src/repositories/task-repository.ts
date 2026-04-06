@@ -16,6 +16,10 @@ export abstract class TaskRepository {
   abstract delete(taskId: string, soft?: boolean): Promise<void>;
   abstract getByCreatorId(creatorId: string): Promise<ITask[]>;
   abstract getSubmissionCount(taskId: string): Promise<number>;
+  abstract getTasksToClass(
+    classId: string,
+    creatorId: string,
+  ): Promise<ITask[]>;
 }
 
 @Injectable()
@@ -209,5 +213,37 @@ export class PrismaTaskRepository implements TaskRepository {
     return await prisma.submission.count({
       where: { taskId },
     });
+  }
+
+  /**
+   * Obtém as tarefas que podem ser associadas a uma turma, considerando as seguintes regras:
+   * Buscar por tarefas que sejam públicas, visíveis e/ou criadas pelo autor
+   * Buscar por tarefas que não estejam vinculadas a turma
+   *
+   * @returns Lista de tarefas que podem ser associadas à turma.
+   *
+   */
+  async getTasksToClass(classId: string, creatorId: string) {
+    console.log(`Fetching tasks linkable to class: ${classId}`);
+    const tasks = await prisma.task.findMany({
+      where: {
+        deletedAt: null,
+        AND: [
+          {
+            OR: [{ isPublic: true, isVisible: true }, { creatorId }],
+          },
+          {
+            NOT: {
+              classTasks: {
+                some: {
+                  classId,
+                },
+              },
+            },
+          },
+        ],
+      },
+    });
+    return tasks as ITask[];
   }
 }

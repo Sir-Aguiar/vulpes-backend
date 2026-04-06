@@ -72,6 +72,18 @@ export class TaskController {
     };
   }
 
+  @Get('/linkable-to-class')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PROFESSOR, Role.ADMIN)
+  async getTasksLinkableToClass(
+    @Query('classId') classId: string,
+    @CurrentUser() user: any,
+  ) {
+    console.log(`Buscando ${user}`);
+    const tasks = await this.taskService.getToLinkToClass(classId, user.userId);
+    return { tasks };
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STUDENT, Role.PROFESSOR, Role.ADMIN)

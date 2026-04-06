@@ -155,4 +155,8 @@ export class TaskService {
   async getByCreatorId(creatorId: string): Promise<ITask[]> {
     return await this.taskRepository.getByCreatorId(creatorId);
   }
+
+  async getToLinkToClass(classId: string, creatorId: string) {
+    return await this.taskRepository.getTasksToClass(classId, creatorId);
+  }
 }
