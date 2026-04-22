@@ -1,10 +1,18 @@
 import { CreateTaskDto } from '../dto/create-task.dto';
+import { LinkableTask } from '../dto/get-linkable-tasks.dto';
 import { GetTasksQueryDto } from '../dto/get-tasks.dto';
 import { UpdateTaskDto } from '../dto/update-task.dto';
 import { TaskWithRelations } from '../entities/task.entity';
 
 export interface CreateTaskData extends CreateTaskDto {
   creatorId: string;
+}
+
+export interface LinkableTasksOptions {
+  page: number;
+  limit: number;
+  search?: string;
+  order: 'asc' | 'desc';
 }
 
 export abstract class TaskRepository {
@@ -24,5 +32,6 @@ export abstract class TaskRepository {
   abstract getTasksLinkableToClass(
     classId: string,
     creatorId: string,
-  ): Promise<TaskWithRelations[]>;
+    options: LinkableTasksOptions,
+  ): Promise<{ tasks: LinkableTask[]; total: number }>;
 }

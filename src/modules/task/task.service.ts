@@ -13,6 +13,7 @@ import { AuthUser } from '../../common/types/auth-user.type';
 import { ClassTaskRepository } from '../class-task/repositories/class-task.repository';
 import { ClassRepository } from '../class/repositories/class.repository';
 import { CreateTaskDto } from './dto/create-task.dto';
+import { GetLinkableTasksQueryDto } from './dto/get-linkable-tasks.dto';
 import { GetTasksQueryDto } from './dto/get-tasks.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskWithRelations } from './entities/task.entity';
@@ -130,8 +131,20 @@ export class TaskService {
     return this.taskRepository.getByCreatorId(creatorId);
   }
 
-  async getLinkableToClass(classId: string, user: AuthUser) {
-    return this.taskRepository.getTasksLinkableToClass(classId, user.userId);
+  /**
+   * Lista tarefas que o usuário pode vincular a uma turma, com busca
+   * por título, ordenação por `createdAt` e paginação. A filtragem de
+   * "quais tarefas são elegíveis" vive no repositório (públicas+visíveis
+   * OU criadas pelo usuário, excluindo as já vinculadas).
+   */
+  async getLinkableToClass(query: GetLinkableTasksQueryDto, user: AuthUser) {
+    const { classId, page, limit, search, order } = query;
+    return this.taskRepository.getTasksLinkableToClass(classId, user.userId, {
+      page,
+      limit,
+      search,
+      order,
+    });
   }
 
   /**

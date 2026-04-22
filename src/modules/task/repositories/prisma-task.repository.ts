@@ -2,10 +2,26 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { ApplicationError } from '../../../common/errors/application.error';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
+import { LinkableTask } from '../dto/get-linkable-tasks.dto';
 import { GetTasksQueryDto } from '../dto/get-tasks.dto';
 import { UpdateTaskDto } from '../dto/update-task.dto';
 import { TaskWithRelations } from '../entities/task.entity';
-import { CreateTaskData, TaskRepository } from './task.repository';
+import {
+  CreateTaskData,
+  LinkableTasksOptions,
+  TaskRepository,
+} from './task.repository';
+
+const LINKABLE_TASK_SELECT = {
+  taskId: true,
+  creatorId: true,
+  title: true,
+  description: true,
+  updatedAt: true,
+  createdAt: true,
+  isPublic: true,
+  isVisible: true,
+} satisfies Prisma.TaskSelect;
 
 const TASK_INCLUDE = {
   taskParams: true,
@@ -169,22 +185,44 @@ export class PrismaTaskRepository implements TaskRepository {
 
   /**
    * Tarefas que podem ser associadas a uma turma:
-   * - Públicas e visíveis OU criadas pelo usuário
-   * - Que não estejam ainda vinculadas à turma
+   * - Públicas e visíveis OU criadas pelo usuário autenticado.
+   * - Que ainda NÃO estejam vinculadas à turma informada.
+   *
+   * Suporta busca por título (case-insensitive, `contains`), ordenação
+   * por `createdAt` e paginação. Retorna `{ tasks, total }` numa só
+   * transação para garantir que o `total` corresponde aos filtros.
    */
-  getTasksLinkableToClass(
+  async getTasksLinkableToClass(
     classId: string,
     creatorId: string,
-  ): Promise<TaskWithRelations[]> {
-    return this.prisma.task.findMany({
-      where: {
-        deletedAt: null,
-        AND: [
-          { OR: [{ isPublic: true, isVisible: true }, { creatorId }] },
-          { NOT: { classTasks: { some: { classId } } } },
-        ],
-      },
-      include: TASK_INCLUDE,
-    });
+    options: LinkableTasksOptions,
+  ): Promise<{ tasks: LinkableTask[]; total: number }> {
+    const { page, limit, search, order } = options;
+    const skip = (page - 1) * limit;
+
+    const filters: Prisma.TaskWhereInput[] = [
+      { deletedAt: null },
+      { OR: [{ isPublic: true, isVisible: true }, { creatorId }] },
+      { NOT: { classTasks: { some: { classId } } } },
+    ];
+
+    if (search) {
+      filters.push({ title: { contains: search, mode: 'insensitive' } });
+    }
+
+    const where: Prisma.TaskWhereInput = { AND: filters };
+
+    const [tasks, total] = await this.prisma.$transaction([
+      this.prisma.task.findMany({
+        where,
+        select: LINKABLE_TASK_SELECT,
+        orderBy: { createdAt: order },
+        skip,
+        take: limit,
+      }),
+      this.prisma.task.count({ where }),
+    ]);
+
+    return { tasks, total };
   }
 }

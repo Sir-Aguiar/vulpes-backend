@@ -16,6 +16,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { paginate } from '../../common/pagination/pagination.types';
 import type { AuthUser } from '../../common/types/auth-user.type';
 import { CreateTaskDto } from './dto/create-task.dto';
+import { GetLinkableTasksQueryDto } from './dto/get-linkable-tasks.dto';
 import { GetTasksQueryDto } from './dto/get-tasks.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskService } from './task.service';
@@ -67,17 +68,22 @@ export class TaskController {
   @Get('/linkable-to-class')
   @Roles(Role.PROFESSOR, Role.ADMIN)
   @ApiOperation({
-    summary: 'Tarefas que podem ser vinculadas a uma turma',
+    summary: 'Tarefas que podem ser vinculadas a uma turma (paginado)',
     description:
       'Retorna tarefas do criador + tarefas públicas e visíveis, excluindo ' +
-      'as já vinculadas à turma informada.',
+      'as já vinculadas à turma. Suporta busca por título (`search`, ' +
+      'case-insensitive) e ordenação por data de criação ' +
+      '(`order=asc|desc`, default `desc`). Paginação padrão: 20/página.',
   })
   async getLinkableToClass(
-    @Query('classId', ParseUUIDPipe) classId: string,
+    @Query() query: GetLinkableTasksQueryDto,
     @CurrentUser() user: AuthUser,
   ) {
-    const tasks = await this.taskService.getLinkableToClass(classId, user);
-    return { tasks: tasks.map(serializeTask) };
+    const { tasks, total } = await this.taskService.getLinkableToClass(
+      query,
+      user,
+    );
+    return paginate(tasks, total, query);
   }
 
   @Get(':id')
