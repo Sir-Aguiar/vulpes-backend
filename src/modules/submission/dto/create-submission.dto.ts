@@ -6,6 +6,7 @@ export const createSubmissionSchema = z.object({
   listId: z.uuid('ID da lista inválido').optional(),
   code: z.string().min(1, 'Defina o código submetido'),
   isCorrect: z.boolean().default(false),
+  submittedAt: z.string().datetime().optional(),
 });
 
 export class CreateSubmissionDto extends createZodDto(createSubmissionSchema) {}

@@ -48,6 +48,25 @@ export class PrismaSubmissionRepository implements SubmissionRepository {
     }
   }
 
+  async getByListId(listId: string): Promise<SubmissionWithRelations[]> {
+    try {
+      return await this.prisma.submission.findMany({
+        where: { listId },
+        include: STUDENT_INCLUDE,
+        orderBy: { submittedAt: 'desc' },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new ApplicationError(
+          400,
+          'Erro ao buscar submissões da lista',
+          error,
+        );
+      }
+      throw error;
+    }
+  }
+
   async update(
     submissionId: string,
     data: Partial<Submission>,

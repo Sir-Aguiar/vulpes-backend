@@ -41,6 +41,13 @@ export class SubmissionController {
     return this.submissionService.getByTaskId(taskId);
   }
 
+  @Get('list/:listId')
+  @Roles(Role.PROFESSOR, Role.ADMIN)
+  @ApiOperation({ summary: 'Lista submissões de uma lista' })
+  getByListId(@Param('listId', ParseUUIDPipe) listId: string) {
+    return this.submissionService.getByListId(listId);
+  }
+
   @Put('feedback/:id')
   @Roles(Role.PROFESSOR, Role.ADMIN)
   @ApiOperation({ summary: 'Envia feedback do professor para uma submissão' })

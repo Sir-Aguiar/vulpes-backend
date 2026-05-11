@@ -19,6 +19,10 @@ export class SubmissionService {
     return this.submissionRepository.getByTaskId(taskId);
   }
 
+  getByListId(listId: string) {
+    return this.submissionRepository.getByListId(listId);
+  }
+
   sendFeedback(submissionId: string, { professorComments }: SendFeedbackDto) {
     return this.submissionRepository.update(submissionId, {
       professorComments,
