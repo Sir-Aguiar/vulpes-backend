@@ -57,4 +57,11 @@ export class SubmissionController {
   ) {
     return this.submissionService.sendFeedback(id, body);
   }
+
+  @Get('feedbacks')
+  @Roles(Role.STUDENT, Role.PROFESSOR, Role.ADMIN)
+  @ApiOperation({ summary: 'Lista feedbacks de um aluno' })
+  getFeedbacks(@CurrentUser() user: AuthUser) {
+    return this.submissionService.getFeedbacks(user);
+  }
 }

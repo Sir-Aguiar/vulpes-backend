@@ -67,6 +67,20 @@ export class PrismaSubmissionRepository implements SubmissionRepository {
     }
   }
 
+  async getFeedbacks(studentId: string): Promise<SubmissionWithRelations[]> {
+    try {
+      return await this.prisma.submission.findMany({
+        where: { studentId, professorComments: { not: null } },
+        orderBy: { updatedAt: 'desc' },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new ApplicationError(400, 'Erro ao buscar feedbacks', error);
+      }
+      throw error;
+    }
+  }
+
   async update(
     submissionId: string,
     data: Partial<Submission>,

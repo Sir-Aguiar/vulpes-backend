@@ -31,7 +31,10 @@ export abstract class ListRepository {
   abstract getByClassId(
     classId: string,
     query: GetListsQueryDto,
-  ): Promise<{ lists: ListWithRelations[]; total: number }>;
+  ): Promise<{
+    lists: Omit<ListWithRelations, 'submissions'>[];
+    total: number;
+  }>;
   abstract update(listId: string, data: UpdateListDto): Promise<List>;
   abstract delete(listId: string): Promise<void>;
 }

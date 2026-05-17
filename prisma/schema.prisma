@@ -131,6 +131,7 @@ model Submission {
   isCorrect         Boolean  @default(false)
   submittedAt       DateTime @default(now())
   professorComments String?  @db.Text
+  updatedAt         DateTime @updatedAt @default(now())
 
   task    Task  @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
   student User  @relation(fields: [studentId], references: [userId], onDelete: Cascade)

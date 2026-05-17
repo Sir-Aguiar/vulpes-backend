@@ -28,4 +28,8 @@ export class SubmissionService {
       professorComments,
     });
   }
+
+  getFeedbacks(user: AuthUser) {
+    return this.submissionRepository.getFeedbacks(user.userId);
+  }
 }

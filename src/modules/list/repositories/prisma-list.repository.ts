@@ -67,7 +67,10 @@ export class PrismaListRepository implements ListRepository {
   async getByClassId(
     classId: string,
     query: GetListsQueryDto,
-  ): Promise<{ lists: ListWithRelations[]; total: number }> {
+  ): Promise<{
+    lists: Omit<ListWithRelations, 'submissions'>[];
+    total: number;
+  }> {
     const { page, limit } = query;
     const skip = (page - 1) * limit;
 
