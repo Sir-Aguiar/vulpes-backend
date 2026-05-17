@@ -71,6 +71,11 @@ export class PrismaSubmissionRepository implements SubmissionRepository {
     try {
       return await this.prisma.submission.findMany({
         where: { studentId, professorComments: { not: null } },
+        include: {
+          task: {
+            select: { taskId: true, title: true },
+          },
+        },
         orderBy: { updatedAt: 'desc' },
       });
     } catch (error) {

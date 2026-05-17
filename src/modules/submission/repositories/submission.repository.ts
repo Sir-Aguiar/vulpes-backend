@@ -12,6 +12,10 @@ export interface SubmissionWithRelations extends Submission {
     name: string;
     institution?: unknown;
   };
+  task?: {
+    taskId: string;
+    title: string;
+  };
 }
 
 export abstract class SubmissionRepository {
