@@ -91,9 +91,19 @@ export class ListService {
 
   async getById(listId: string, user: AuthUser) {
     const list = await this.listRepository.getById(listId);
+
     if (!list) throw new NotFoundException('Lista não encontrada');
 
     await this.assertReadAccess(list.classId, list.class?.professorId, user);
+
+    // Se o usuário for um aluno, retorna somente as submissões dele
+    if (!isAdmin(user) && !isClassOwner(user, list.class?.professorId ?? '')) {
+      const filteredSubmissions = list.submissions.filter(
+        (s) => s.studentId === user.userId,
+      );
+      return { ...list, submissions: filteredSubmissions };
+    }
+
     return list;
   }
 
@@ -157,6 +167,7 @@ export class ListService {
       classId,
       user.userId,
     );
+
     if (!isMember) {
       throw new ForbiddenException(
         'Você não tem permissão para acessar este recurso',

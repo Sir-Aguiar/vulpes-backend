@@ -13,6 +13,10 @@ export interface ListWithRelations extends List {
   _count?: {
     taskLists: number;
   };
+  submissions: {
+    submissionId: string;
+    studentId: string;
+  }[];
 }
 
 export type CreateListData = Omit<CreateListDto, 'taskIds'>;
