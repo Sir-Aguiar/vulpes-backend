@@ -63,4 +63,15 @@ export class ClassTaskController {
   ) {
     return this.classTaskService.delete(classId, taskId, user);
   }
+
+  @Get('dashboard')
+  @Roles(Role.PROFESSOR, Role.ADMIN)
+  @ApiOperation({ summary: 'Dashboard de tarefas de uma turma' })
+  getDashboardData(
+    @CurrentUser() user: AuthUser,
+    @Query('classId', ParseUUIDPipe) classId: string,
+    @Query('taskId', ParseUUIDPipe) taskId: string,
+  ) {
+    return this.classTaskService.getDashboardData(user, classId, taskId);
+  }
 }

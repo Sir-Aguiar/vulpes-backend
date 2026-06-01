@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import {
   ensureClassWriteAccess,
+  ensureResourceOwnership,
   isAdmin,
   isClassOwner,
 } from '../../common/authorization/authorization.helpers';
@@ -119,5 +120,15 @@ export class ClassTaskService {
 
     await this.classTaskRepository.delete(classId, taskId);
     return { message: 'Tarefa removida da turma com sucesso' };
+  }
+
+  async getDashboardData(user: AuthUser, classId: string, taskId: string) {
+    const classData = await this.classRepository.getById(classId);
+
+    if (!classData) throw new NotFoundException('Turma não encontrada');
+
+    ensureResourceOwnership(user, classData.professorId);
+
+    return this.classTaskRepository.getDashboardData(classId, taskId);
   }
 }

@@ -7,6 +7,7 @@ import { GetClassTasksQueryDto } from '../dto/get-class-tasks.dto';
 import {
   ClassTaskRepository,
   ClassTaskWithRelations,
+  IDashboardData,
 } from './class-task.repository';
 
 const TASK_INCLUDE = {
@@ -165,5 +166,58 @@ export class PrismaClassTaskRepository implements ClassTaskRepository {
       where: { taskId },
       include: { class: { select: CLASS_SELECT } },
     });
+  }
+
+  async getDashboardData(
+    classId: string,
+    taskId: string,
+  ): Promise<IDashboardData> {
+    // Pegar todos os alunos da turma
+    const classStudents = await this.prisma.classStudent.findMany({
+      where: { classId },
+      include: { student: { select: { userId: true, name: true } } },
+    });
+
+    const studentIds = classStudents.map((student) => student.studentId);
+
+    // Pegar a última submissão de cada aluno na tarefa
+    const submissions = await this.prisma.submission.findMany({
+      where: {
+        taskId,
+        studentId: { in: studentIds },
+      },
+      orderBy: { submittedAt: 'desc' },
+      select: {
+        submissionId: true,
+        studentId: true,
+        code: true,
+        isCorrect: true,
+        submittedAt: true,
+        professorComments: true,
+      },
+    });
+
+    const result: IDashboardData = { students: [] };
+
+    for (const student of classStudents) {
+      // Encontrar a última submissão do aluno na tarefa
+      const lastSubmission = submissions.find(
+        (submission) => submission.studentId === student.studentId,
+      )!;
+
+      result.students.push({
+        studentId: student.studentId,
+        name: student.student.name,
+        lastSubmission: {
+          submissionId: lastSubmission.submissionId,
+          isCorrect: lastSubmission.isCorrect,
+          submittedAt: lastSubmission.submittedAt,
+          code: lastSubmission.code,
+          professorComments: lastSubmission.professorComments,
+        },
+      });
+    }
+
+    return result;
   }
 }

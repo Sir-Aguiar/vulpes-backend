@@ -19,6 +19,20 @@ export interface ClassTaskWithRelations extends ClassTask {
   };
 }
 
+export interface IDashboardData {
+  students: {
+    studentId: string;
+    name: string;
+    lastSubmission: {
+      submissionId: string;
+      isCorrect: boolean;
+      submittedAt: Date;
+      code: string;
+      professorComments: string | null;
+    };
+  }[];
+}
+
 export abstract class ClassTaskRepository {
   abstract create(data: CreateClassTaskDto): Promise<ClassTask>;
   abstract createMany(
@@ -44,4 +58,8 @@ export abstract class ClassTaskRepository {
     classId: string,
     taskIds: string[],
   ): Promise<string[]>;
+  abstract getDashboardData(
+    classId: string,
+    taskId: string,
+  ): Promise<IDashboardData>;
 }
