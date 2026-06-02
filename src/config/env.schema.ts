@@ -5,6 +5,7 @@ export const envSchema = z.object({
     .enum(['development', 'test', 'production'])
     .default('development'),
   HOST: z.string().min(1, 'HOST is required'),
+  FRONTEND_HOST: z.string().min(1, 'FRONTEND_HOST is required'),
   PORT: z.coerce.number().int().positive().default(8080),
 
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),

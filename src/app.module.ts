@@ -15,6 +15,7 @@ import { ClassModule } from './modules/class/class.module';
 import { InstitutionModule } from './modules/institution/institution.module';
 import { ListModule } from './modules/list/list.module';
 import { ProfessorPermissionModule } from './modules/professor-permission/professor-permission.module';
+import { ResetPasswordModule } from './modules/reset-password/reset-password.module';
 import { StudentClassPermissionRequestModule } from './modules/student-class-permission-request/student-class-permission-request.module';
 import { SubmissionModule } from './modules/submission/submission.module';
 import { TaskModule } from './modules/task/task.module';
@@ -36,6 +37,7 @@ import { UserModule } from './modules/user/user.module';
     SubmissionModule,
     InstitutionModule,
     ProfessorPermissionModule,
+    ResetPasswordModule,
     StudentClassPermissionRequestModule,
   ],
   controllers: [AppController],

@@ -8,4 +8,8 @@ export abstract class UserRepository {
   abstract updateRole(userId: string, role: Role): Promise<User>;
   abstract updateName(userId: string, name: string): Promise<User>;
   abstract updateEmail(userId: string, email: string): Promise<User>;
+  abstract updatePassword(
+    userId: string,
+    hashedPassword: string,
+  ): Promise<User>;
 }

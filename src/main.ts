@@ -43,6 +43,7 @@ async function bootstrap() {
     )
     .addTag('auth', 'Autenticação e cadastro de usuários')
     .addTag('user', 'Dados do usuário autenticado (perfil, troca de email)')
+    .addTag('reset-password', 'Fluxo de redefinição de senha')
     .addTag('class', 'Turmas (criação, consulta, matrícula)')
     .addTag('class-student', 'Vínculo de estudantes com turmas')
     .addTag('class-task', 'Associação de tarefas a turmas')

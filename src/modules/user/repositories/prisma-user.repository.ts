@@ -40,4 +40,11 @@ export class PrismaUserRepository implements UserRepository {
       data: { email },
     });
   }
+
+  updatePassword(userId: string, hashedPassword: string): Promise<User> {
+    return this.prisma.user.update({
+      where: { userId },
+      data: { password: hashedPassword },
+    });
+  }
 }

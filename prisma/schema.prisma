@@ -194,7 +194,6 @@ model List {
 model ResetPasswordOrder {
   orderId   String   @id @default(uuid())
   userId    String
-  code      String   @db.VarChar(5)
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
