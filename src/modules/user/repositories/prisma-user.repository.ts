@@ -26,4 +26,18 @@ export class PrismaUserRepository implements UserRepository {
       data: { role },
     });
   }
+
+  updateName(userId: string, name: string): Promise<User> {
+    return this.prisma.user.update({
+      where: { userId },
+      data: { name },
+    });
+  }
+
+  updateEmail(userId: string, email: string): Promise<User> {
+    return this.prisma.user.update({
+      where: { userId },
+      data: { email },
+    });
+  }
 }

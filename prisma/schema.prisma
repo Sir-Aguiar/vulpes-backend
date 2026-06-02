@@ -32,6 +32,7 @@ model User {
 
   studentClassPermissionRequests StudentClassPermissionRequest[]
   institution                    Institution?                    @relation(fields: [institutionId], references: [institutionId])
+  resetPasswordOrders            ResetPasswordOrder[]
 }
 
 enum TaskInputMode {
@@ -131,7 +132,7 @@ model Submission {
   isCorrect         Boolean  @default(false)
   submittedAt       DateTime @default(now())
   professorComments String?  @db.Text
-  updatedAt         DateTime @updatedAt @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
 
   task    Task  @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
   student User  @relation(fields: [studentId], references: [userId], onDelete: Cascade)
@@ -188,6 +189,15 @@ model List {
 
   submissions Submission[]
   taskLists   TaskList[]
+}
+
+model ResetPasswordOrder {
+  orderId   String   @id @default(uuid())
+  userId    String
+  code      String   @db.VarChar(5)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
 
 model TaskList {

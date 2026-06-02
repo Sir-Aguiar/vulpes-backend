@@ -42,6 +42,7 @@ async function bootstrap() {
       'bearer',
     )
     .addTag('auth', 'Autenticação e cadastro de usuários')
+    .addTag('user', 'Dados do usuário autenticado (perfil, troca de email)')
     .addTag('class', 'Turmas (criação, consulta, matrícula)')
     .addTag('class-student', 'Vínculo de estudantes com turmas')
     .addTag('class-task', 'Associação de tarefas a turmas')
