@@ -12,7 +12,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import type { AuthUser } from '../../common/types/auth-user.type';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto, UpdateUserDto } from './dto/update-user.dto';
 import { UserService } from './user.service';
 
 @ApiTags('user')
@@ -45,5 +45,19 @@ export class UserController {
   })
   verifyEmailLink(@Param('token') token: string) {
     return this.userService.verifyEmailLink(token);
+  }
+
+  @Patch('change-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Altera a senha do usuário',
+    description:
+      'Recebe a senha atual e a nova senha e altera a senha do usuário.',
+  })
+  changePassword(
+    @Body() body: ChangePasswordDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.userService.changePassword(user, body);
   }
 }

@@ -3,14 +3,17 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { renderFile } from 'ejs';
 import { resolve } from 'path';
 import { AuthUser } from '../../common/types/auth-user.type';
 import { EmailerService } from '../../infra/emailer/emailer.service';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto, UpdateUserDto } from './dto/update-user.dto';
 import { UserRepository } from './repositories/user.repository';
 import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcryptjs';
+import { EnvService } from '../../config/env.service';
 
 /**
  * Template copiado para `dist/templates` no build (ver `nest-cli.json`).
@@ -24,6 +27,7 @@ export class UserService {
     private readonly userRepository: UserRepository,
     private readonly emailerService: EmailerService,
     private readonly jwtService: JwtService,
+    private readonly envService: EnvService,
   ) {}
 
   /**
@@ -75,7 +79,7 @@ export class UserService {
       { expiresIn: '30m' },
     );
 
-    const link = `${process.env.HOST}/user/verify-email-link/${Buffer.from(token).toString('base64url')}`;
+    const link = `${this.envService.get('HOST')}/user/verify-email-link/${Buffer.from(token).toString('base64url')}`;
 
     return link;
   }
@@ -101,5 +105,26 @@ export class UserService {
 
     const resolvedPath = resolve('src', 'templates', 'email-verified.ejs');
     return renderFile(resolvedPath, { email: newEmail });
+  }
+
+  public async changePassword({ userId }: AuthUser, data: ChangePasswordDto) {
+    const user = await this.userRepository.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      data.currentPassword,
+      user.password,
+    );
+
+    if (!isPasswordValid) {
+      throw new ForbiddenException('Senha atual inválida');
+    }
+
+    const hashedPassword = await bcrypt.hash(data.newPassword, 10);
+
+    await this.userRepository.updatePassword(userId, hashedPassword);
   }
 }

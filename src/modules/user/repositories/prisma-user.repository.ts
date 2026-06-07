@@ -41,10 +41,10 @@ export class PrismaUserRepository implements UserRepository {
     });
   }
 
-  updatePassword(userId: string, hashedPassword: string): Promise<User> {
+  updatePassword(userId: string, password: string): Promise<User> {
     return this.prisma.user.update({
       where: { userId },
-      data: { password: hashedPassword },
+      data: { password },
     });
   }
 }

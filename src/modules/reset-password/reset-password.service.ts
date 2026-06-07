@@ -79,6 +79,7 @@ export class ResetPasswordService {
     const token = Buffer.from(encodedToken, 'base64url').toString('utf-8');
 
     let payload: ResetTokenPayload;
+
     try {
       payload = this.jwtService.verify<ResetTokenPayload>(token);
     } catch {
@@ -88,6 +89,7 @@ export class ResetPasswordService {
     const order = await this.resetPasswordRepository.findOrderById(
       payload.orderId,
     );
+
     if (!order) {
       throw new NotFoundException('Ordem de troca de senha não encontrada');
     }
@@ -103,6 +105,7 @@ export class ResetPasswordService {
     const order = await this.resetPasswordRepository.findOrderById(
       data.orderId,
     );
+
     if (!order) {
       throw new NotFoundException('Ordem de troca de senha não encontrada');
     }
@@ -111,6 +114,7 @@ export class ResetPasswordService {
       data.password,
       PASSWORD_HASH_ROUNDS,
     );
+
     await this.userRepository.updatePassword(order.userId, hashedPassword);
     await this.resetPasswordRepository.deleteOrder(order.orderId);
   }

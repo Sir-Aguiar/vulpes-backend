@@ -14,3 +14,12 @@ export const updateUserSchema = z
   });
 
 export class UpdateUserDto extends createZodDto(updateUserSchema) {}
+
+export const changePasswordSchema = z.object({
+  currentPassword: z
+    .string()
+    .min(6, 'A senha atual deve ter ao menos 6 caracteres'),
+  newPassword: z.string().min(6, 'A nova senha deve ter ao menos 6 caracteres'),
+});
+
+export class ChangePasswordDto extends createZodDto(changePasswordSchema) {}
