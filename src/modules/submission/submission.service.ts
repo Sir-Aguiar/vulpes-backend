@@ -29,7 +29,7 @@ export class SubmissionService {
     });
   }
 
-  getFeedbacks(user: AuthUser) {
-    return this.submissionRepository.getFeedbacks(user.userId);
+  getFeedbacks(user: AuthUser, isWidget: boolean = false) {
+    return this.submissionRepository.getFeedbacks(user.userId, isWidget);
   }
 }

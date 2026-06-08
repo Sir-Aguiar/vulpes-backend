@@ -67,16 +67,26 @@ export class PrismaSubmissionRepository implements SubmissionRepository {
     }
   }
 
-  async getFeedbacks(studentId: string): Promise<SubmissionWithRelations[]> {
+  async getFeedbacks(
+    studentId: string,
+    isWidget: boolean = false,
+  ): Promise<SubmissionWithRelations[]> {
+    const include: Prisma.SubmissionInclude = {
+      task: true,
+    };
+
+    if (isWidget) {
+      include.task = {
+        select: { taskId: true, title: true } satisfies Prisma.TaskSelect,
+      };
+    }
+
     try {
       return await this.prisma.submission.findMany({
         where: { studentId, professorComments: { not: null } },
-        include: {
-          task: {
-            select: { taskId: true, title: true },
-          },
-        },
+        include,
         orderBy: { updatedAt: 'desc' },
+        take: isWidget ? 5 : undefined,
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {

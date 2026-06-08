@@ -6,6 +6,7 @@ import {
   ParseUUIDPipe,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
@@ -61,7 +62,10 @@ export class SubmissionController {
   @Get('feedbacks')
   @Roles(Role.STUDENT, Role.PROFESSOR, Role.ADMIN)
   @ApiOperation({ summary: 'Lista feedbacks de um aluno' })
-  getFeedbacks(@CurrentUser() user: AuthUser) {
-    return this.submissionService.getFeedbacks(user);
+  getFeedbacks(
+    @CurrentUser() user: AuthUser,
+    @Query('isWidget') isWidget?: boolean,
+  ) {
+    return this.submissionService.getFeedbacks(user, isWidget ?? false);
   }
 }

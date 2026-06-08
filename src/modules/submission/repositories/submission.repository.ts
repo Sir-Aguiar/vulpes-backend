@@ -22,7 +22,10 @@ export abstract class SubmissionRepository {
   abstract create(data: CreateSubmissionData): Promise<Submission>;
   abstract getByTaskId(taskId: string): Promise<SubmissionWithRelations[]>;
   abstract getByListId(listId: string): Promise<SubmissionWithRelations[]>;
-  abstract getFeedbacks(studentId: string): Promise<SubmissionWithRelations[]>;
+  abstract getFeedbacks(
+    studentId: string,
+    isWidget: boolean,
+  ): Promise<SubmissionWithRelations[]>;
   abstract update(
     submissionId: string,
     data: Partial<Submission>,
