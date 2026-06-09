@@ -33,6 +33,7 @@ model User {
   studentClassPermissionRequests StudentClassPermissionRequest[]
   institution                    Institution?                    @relation(fields: [institutionId], references: [institutionId])
   resetPasswordOrders            ResetPasswordOrder[]
+  bugReports                     BugReport[]
 }
 
 enum TaskInputMode {
@@ -207,4 +208,46 @@ model TaskList {
   task      Task     @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
 
   @@id([taskId, listId])
+}
+
+enum BugReportStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum BugReportSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model BugReport {
+  bugReportId Int @id @default(autoincrement())
+
+  // Dados do Bug
+  path             String   @db.Text
+  description      String   @db.Text
+  expectedBehavior String?  @db.Text
+  actualBehavior   String?  @db.Text
+  stepsToReproduce String?  @db.Text
+  screenshots      String[] @default([])
+
+  // Ambiente
+  os      String?
+  browser String?
+
+  // Gerenciamento
+  status   BugReportStatus   @default(OPEN)
+  severity BugReportSeverity @default(LOW)
+
+  // Timestamp
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  userId String
+  user   User   @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }

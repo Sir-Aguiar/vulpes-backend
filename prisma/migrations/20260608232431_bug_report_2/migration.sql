@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "BugReport" ADD COLUMN     "os" TEXT,
+ADD COLUMN     "severity" TEXT DEFAULT 'UNASSIGNED',
+ADD COLUMN     "status" TEXT NOT NULL DEFAULT 'OPEN',
+ALTER COLUMN "screenshots" SET DEFAULT ARRAY[]::TEXT[];

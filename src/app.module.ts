@@ -8,6 +8,7 @@ import { ConfigModule } from './config/config.module';
 import { PrismaModule } from './infra/prisma/prisma.module';
 import { StorageModule } from './infra/storage/storage.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { BugReportModule } from './modules/bug-report/bug-report.module';
 import { ClassStudentModule } from './modules/class-student/class-student.module';
 import { ClassTaskListModule } from './modules/class-task-list/class-task-list.module';
 import { ClassTaskModule } from './modules/class-task/class-task.module';
@@ -28,6 +29,7 @@ import { UserModule } from './modules/user/user.module';
     StorageModule,
     UserModule,
     AuthModule,
+    BugReportModule,
     ClassModule,
     ClassStudentModule,
     ClassTaskModule,
