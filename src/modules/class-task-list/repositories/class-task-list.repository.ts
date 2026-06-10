@@ -2,6 +2,11 @@ import { TaskList } from '@prisma/client';
 import { CreateClassTaskListDto } from '../dto/create-class-task-list.dto';
 import { GetClassTaskListsQueryDto } from '../dto/get-class-task-lists.dto';
 
+export interface TaskListWeightInput {
+  taskId: string;
+  weight?: number;
+}
+
 export interface ClassTaskListWithRelations extends TaskList {
   task?: {
     taskId: string;
@@ -16,6 +21,7 @@ export interface ClassTaskListWithRelations extends TaskList {
     listId: string;
     title: string;
     deadline: Date;
+    releaseDate: Date;
     submissionLimit: number | null;
     classId: string;
   };
@@ -25,7 +31,7 @@ export abstract class ClassTaskListRepository {
   abstract create(data: CreateClassTaskListDto): Promise<TaskList>;
   abstract createMany(
     listId: string,
-    taskIds: string[],
+    tasks: TaskListWeightInput[],
   ): Promise<{ count: number }>;
   abstract getByIds(
     taskId: string,

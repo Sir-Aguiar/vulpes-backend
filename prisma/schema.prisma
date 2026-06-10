@@ -183,6 +183,7 @@ model List {
   classId         String
   title           String   @db.VarChar(255)
   deadline        DateTime
+  releaseDate     DateTime @default(now())
   submissionLimit Int?     @default(1)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -192,22 +193,24 @@ model List {
   taskLists   TaskList[]
 }
 
+model TaskList {
+  taskId String
+  listId String
+  weight Decimal @default(1.0)
+
+  createdAt DateTime @default(now())
+  list      List     @relation(fields: [listId], references: [listId], onDelete: Cascade)
+  task      Task     @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+
+  @@id([taskId, listId])
+}
+
 model ResetPasswordOrder {
   orderId   String   @id @default(uuid())
   userId    String
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
-}
-
-model TaskList {
-  taskId    String
-  listId    String
-  createdAt DateTime @default(now())
-  list      List     @relation(fields: [listId], references: [listId], onDelete: Cascade)
-  task      Task     @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
-
-  @@id([taskId, listId])
 }
 
 enum BugReportStatus {

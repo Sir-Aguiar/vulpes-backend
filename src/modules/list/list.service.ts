@@ -48,7 +48,8 @@ export class ListService {
    * @returns A lista criada com `tasksAdded` = quantidade de tarefas associadas.
    */
   async create(data: CreateListDto, user: AuthUser) {
-    const { taskIds, ...listData } = data;
+    const { tasks, ...listData } = data;
+    const taskIds = tasks.map((task) => task.taskId);
 
     const classData = await this.classRepository.getById(listData.classId);
     if (!classData) throw new NotFoundException('Turma não encontrada');
@@ -59,7 +60,7 @@ export class ListService {
       'Você não tem permissão para criar listas nesta turma',
     );
 
-    const tasks = await this.validateTasks(
+    const validatedTasks = await this.validateTasks(
       taskIds,
       user,
       classData.professorId,
@@ -67,7 +68,7 @@ export class ListService {
 
     const list = await this.listRepository.create(listData);
 
-    if (tasks.length > 0 && taskIds) {
+    if (validatedTasks.length > 0) {
       const tasksInClass = await this.classTaskRepository.getTasksInClass(
         listData.classId,
         taskIds,
@@ -83,10 +84,10 @@ export class ListService {
         );
       }
 
-      await this.classTaskListRepository.createMany(list.listId, taskIds);
+      await this.classTaskListRepository.createMany(list.listId, tasks);
     }
 
-    return { ...list, tasksAdded: taskIds?.length ?? 0 };
+    return { ...list, tasksAdded: tasks.length };
   }
 
   async getById(listId: string, user: AuthUser) {

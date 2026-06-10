@@ -28,6 +28,9 @@ export class PrismaListRepository implements ListRepository {
           classId: data.classId,
           title: data.title,
           deadline: new Date(data.deadline),
+          releaseDate: data.releaseDate
+            ? new Date(data.releaseDate)
+            : undefined,
           submissionLimit: data.submissionLimit,
         },
       });
@@ -95,6 +98,10 @@ export class PrismaListRepository implements ListRepository {
     try {
       const updateData: Prisma.ListUpdateInput = { ...data };
       if (data.deadline) updateData.deadline = new Date(data.deadline);
+
+      if (data.releaseDate) {
+        updateData.releaseDate = new Date(data.releaseDate);
+      }
 
       return await this.prisma.list.update({
         where: { listId },

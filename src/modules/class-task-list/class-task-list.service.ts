@@ -28,6 +28,7 @@ export class ClassTaskListService {
 
   async create(data: CreateClassTaskListDto, user: AuthUser) {
     const list = await this.listRepository.getById(data.listId);
+
     if (!list) throw new NotFoundException('Lista não encontrada');
 
     if (list.classId !== data.classId) {
@@ -46,6 +47,7 @@ export class ClassTaskListService {
       data.classId,
       data.taskId,
     );
+
     if (!classTask) {
       throw new BadRequestException(
         'A tarefa deve estar associada à turma antes de ser adicionada à lista',
@@ -87,7 +89,10 @@ export class ClassTaskListService {
       listId,
       query,
     );
-    const tasks = result.classTaskLists.map(({ task }) => ({ ...task }));
+    const tasks = result.classTaskLists.map(({ task, weight }) => ({
+      ...task,
+      weight: Number(weight),
+    }));
     return { tasks, total: result.total };
   }
 

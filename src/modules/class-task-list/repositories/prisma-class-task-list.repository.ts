@@ -7,6 +7,7 @@ import { GetClassTaskListsQueryDto } from '../dto/get-class-task-lists.dto';
 import {
   ClassTaskListRepository,
   ClassTaskListWithRelations,
+  TaskListWeightInput,
 } from './class-task-list.repository';
 
 const TASK_INCLUDE = {
@@ -21,7 +22,11 @@ export class PrismaClassTaskListRepository implements ClassTaskListRepository {
   async create(data: CreateClassTaskListDto): Promise<TaskList> {
     try {
       return await this.prisma.taskList.create({
-        data: { taskId: data.taskId, listId: data.listId },
+        data: {
+          taskId: data.taskId,
+          listId: data.listId,
+          weight: data.weight,
+        },
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -44,11 +49,11 @@ export class PrismaClassTaskListRepository implements ClassTaskListRepository {
 
   async createMany(
     listId: string,
-    taskIds: string[],
+    tasks: TaskListWeightInput[],
   ): Promise<{ count: number }> {
     try {
       const result = await this.prisma.taskList.createMany({
-        data: taskIds.map((taskId) => ({ taskId, listId })),
+        data: tasks.map(({ taskId, weight }) => ({ taskId, listId, weight })),
         skipDuplicates: true,
       });
       return { count: result.count };

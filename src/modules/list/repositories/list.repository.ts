@@ -19,7 +19,7 @@ export interface ListWithRelations extends List {
   }[];
 }
 
-export type CreateListData = Omit<CreateListDto, 'taskIds'>;
+export type CreateListData = Omit<CreateListDto, 'tasks'>;
 
 export abstract class ListRepository {
   abstract create(data: CreateListData): Promise<List>;

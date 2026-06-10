@@ -5,6 +5,7 @@ export const updateListSchema = z
   .object({
     title: z.string().min(1, 'Defina um título para a lista').optional(),
     deadline: z.iso.datetime('Data limite inválida').optional(),
+    releaseDate: z.iso.datetime('Data de publicação inválida').optional(),
     submissionLimit: z.number().int().min(1).optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
