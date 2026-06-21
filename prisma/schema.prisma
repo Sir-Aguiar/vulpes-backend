@@ -25,6 +25,7 @@ model User {
   updatedAt     DateTime     @updatedAt
   submissions   Submission[]
   tasks         Task[]
+  desativado    Boolean      @default(false)
 
   classes Class[]
 

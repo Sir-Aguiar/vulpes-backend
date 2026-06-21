@@ -12,4 +12,5 @@ export abstract class UserRepository {
     userId: string,
     hashedPassword: string,
   ): Promise<User>;
+  abstract deactivate(userId: string): Promise<User>;
 }
