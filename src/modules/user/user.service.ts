@@ -4,6 +4,7 @@ import {
   NotFoundException,
   UnauthorizedException,
   ForbiddenException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { renderFile } from 'ejs';
 import { resolve } from 'path';
@@ -126,5 +127,19 @@ export class UserService {
     const hashedPassword = await bcrypt.hash(data.newPassword, 10);
 
     await this.userRepository.updatePassword(userId, hashedPassword);
+  }
+
+  async deactivateUser({ userId }: AuthUser): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    try {
+      await this.userRepository.deactivate(userId);
+    } catch {
+      throw new InternalServerErrorException('Falha ao desativar usuário');
+    }
   }
 }

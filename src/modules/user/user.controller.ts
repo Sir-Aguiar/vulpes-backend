@@ -60,4 +60,14 @@ export class UserController {
   ) {
     return this.userService.changePassword(user, body);
   }
+
+  @Patch('desativar')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Desativa um usuário',
+    description: 'Recebe o id do usuário e o desativa',
+  })
+  deactivateUser(@CurrentUser() user: AuthUser): Promise<void> {
+    return this.userService.deactivateUser(user);
+  }
 }

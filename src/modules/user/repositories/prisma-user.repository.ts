@@ -47,4 +47,13 @@ export class PrismaUserRepository implements UserRepository {
       data: { password },
     });
   }
+
+  deactivate(userId: string): Promise<User> {
+    return this.prisma.user.update({
+      where: { userId },
+      data: {
+        desativado: true,
+      },
+    });
+  }
 }
