@@ -17,6 +17,11 @@ const CLASS_SELECT = {
   professorId: true,
 } satisfies Prisma.ClassSelect;
 
+const LIST_INCLUDE = {
+  class: { select: CLASS_SELECT },
+  _count: { select: { classTaskLists: true } },
+} satisfies Prisma.ListInclude;
+
 @Injectable()
 export class PrismaListRepository implements ListRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -45,45 +50,31 @@ export class PrismaListRepository implements ListRepository {
   getById(listId: string): Promise<ListWithRelations | null> {
     return this.prisma.list.findUnique({
       where: { listId },
-      include: {
-        class: { select: CLASS_SELECT },
-        submissions: true,
-        _count: { select: { taskLists: true } },
-      },
+      include: LIST_INCLUDE,
     });
   }
 
   getByIdAndTaskId(
     listId: string,
-    taskId: string,
+    _taskId: string,
   ): Promise<ListWithRelations | null> {
     return this.prisma.list.findUnique({
-      where: { listId, submissions: { every: { taskId } } },
-      include: {
-        class: { select: CLASS_SELECT },
-        submissions: true,
-        _count: { select: { taskLists: true } },
-      },
+      where: { listId },
+      include: LIST_INCLUDE,
     });
   }
 
   async getByClassId(
     classId: string,
     query: GetListsQueryDto,
-  ): Promise<{
-    lists: Omit<ListWithRelations, 'submissions'>[];
-    total: number;
-  }> {
+  ): Promise<{ lists: ListWithRelations[]; total: number }> {
     const { page, limit } = query;
     const skip = (page - 1) * limit;
 
     const [lists, total] = await this.prisma.$transaction([
       this.prisma.list.findMany({
         where: { classId },
-        include: {
-          class: { select: CLASS_SELECT },
-          _count: { select: { taskLists: true } },
-        },
+        include: LIST_INCLUDE,
         skip,
         take: limit,
         orderBy: { deadline: 'asc' },

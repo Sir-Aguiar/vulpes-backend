@@ -77,12 +77,19 @@ export class PrismaClassTaskRepository implements ClassTaskRepository {
     }
   }
 
+  getById(classTaskId: string): Promise<ClassTaskWithRelations | null> {
+    return this.prisma.classTask.findUnique({
+      where: { classTaskId },
+      include: { ...TASK_INCLUDE, class: { select: CLASS_SELECT } },
+    });
+  }
+
   getByIds(
     classId: string,
     taskId: string,
   ): Promise<ClassTaskWithRelations | null> {
-    return this.prisma.classTask.findUnique({
-      where: { classId_taskId: { classId, taskId } },
+    return this.prisma.classTask.findFirst({
+      where: { classId, taskId },
       include: { ...TASK_INCLUDE, class: { select: CLASS_SELECT } },
     });
   }
@@ -110,8 +117,8 @@ export class PrismaClassTaskRepository implements ClassTaskRepository {
 
   async delete(classId: string, taskId: string): Promise<void> {
     try {
-      await this.prisma.classTask.delete({
-        where: { classId_taskId: { classId, taskId } },
+      await this.prisma.classTask.deleteMany({
+        where: { classId, taskId },
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -126,8 +133,8 @@ export class PrismaClassTaskRepository implements ClassTaskRepository {
   }
 
   async isTaskInClass(classId: string, taskId: string): Promise<boolean> {
-    const link = await this.prisma.classTask.findUnique({
-      where: { classId_taskId: { classId, taskId } },
+    const link = await this.prisma.classTask.findFirst({
+      where: { classId, taskId },
     });
     return Boolean(link);
   }
@@ -161,6 +168,15 @@ export class PrismaClassTaskRepository implements ClassTaskRepository {
     return items.map((item) => item.taskId);
   }
 
+  async getByClassIdAndTaskIds(
+    classId: string,
+    taskIds: string[],
+  ): Promise<ClassTask[]> {
+    return this.prisma.classTask.findMany({
+      where: { classId, taskId: { in: taskIds } },
+    });
+  }
+
   getByTaskId(taskId: string): Promise<ClassTaskWithRelations[]> {
     return this.prisma.classTask.findMany({
       where: { taskId },
@@ -172,7 +188,6 @@ export class PrismaClassTaskRepository implements ClassTaskRepository {
     classId: string,
     taskId: string,
   ): Promise<IDashboardData> {
-    // Pegar todos os alunos da turma
     const classStudents = await this.prisma.classStudent.findMany({
       where: { classId },
       include: { student: { select: { userId: true, name: true } } },
@@ -180,11 +195,24 @@ export class PrismaClassTaskRepository implements ClassTaskRepository {
 
     const studentIds = classStudents.map((student) => student.studentId);
 
-    // Pegar a última submissão de cada aluno na tarefa
+    const classTask = await this.prisma.classTask.findFirst({
+      where: { classId, taskId },
+    });
+
     const submissions = await this.prisma.submission.findMany({
       where: {
-        taskId,
         studentId: { in: studentIds },
+        OR: [
+          { taskId },
+          ...(classTask
+            ? [
+                { classTaskId: classTask.classTaskId },
+                {
+                  classTaskList: { classTaskId: classTask.classTaskId },
+                },
+              ]
+            : []),
+        ],
       },
       orderBy: { submittedAt: 'desc' },
       select: {
@@ -200,7 +228,6 @@ export class PrismaClassTaskRepository implements ClassTaskRepository {
     const result: IDashboardData = { students: [] };
 
     for (const student of classStudents) {
-      // Encontrar a última submissão do aluno na tarefa
       const lastSubmission = submissions.find(
         (submission) => submission.studentId === student.studentId,
       )!;

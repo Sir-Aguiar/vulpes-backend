@@ -19,8 +19,12 @@ export class SubmissionService {
     return this.submissionRepository.getByTaskId(taskId);
   }
 
-  getByListId(listId: string) {
-    return this.submissionRepository.getByListId(listId);
+  getByClassTaskId(classTaskId: string) {
+    return this.submissionRepository.getByClassTaskId(classTaskId);
+  }
+
+  getByClassTaskListId(classTaskListId: string) {
+    return this.submissionRepository.getByClassTaskListId(classTaskListId);
   }
 
   sendFeedback(submissionId: string, { professorComments }: SendFeedbackDto) {

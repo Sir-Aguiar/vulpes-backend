@@ -11,12 +11,8 @@ export interface ListWithRelations extends List {
     professorId: string;
   };
   _count?: {
-    taskLists: number;
+    classTaskLists: number;
   };
-  submissions: {
-    submissionId: string;
-    studentId: string;
-  }[];
 }
 
 export type CreateListData = Omit<CreateListDto, 'tasks'>;
@@ -32,7 +28,7 @@ export abstract class ListRepository {
     classId: string,
     query: GetListsQueryDto,
   ): Promise<{
-    lists: Omit<ListWithRelations, 'submissions'>[];
+    lists: ListWithRelations[];
     total: number;
   }>;
   abstract update(listId: string, data: UpdateListDto): Promise<List>;

@@ -14,6 +14,19 @@ const STUDENT_INCLUDE = {
   },
 } satisfies Prisma.SubmissionInclude;
 
+const FULL_INCLUDE = {
+  ...STUDENT_INCLUDE,
+  task: { select: { taskId: true, title: true } },
+  classTask: { include: { task: { select: { taskId: true, title: true } } } },
+  classTaskList: {
+    include: {
+      classTask: {
+        include: { task: { select: { taskId: true, title: true } } },
+      },
+    },
+  },
+} satisfies Prisma.SubmissionInclude;
+
 @Injectable()
 export class PrismaSubmissionRepository implements SubmissionRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -48,10 +61,12 @@ export class PrismaSubmissionRepository implements SubmissionRepository {
     }
   }
 
-  async getByListId(listId: string): Promise<SubmissionWithRelations[]> {
+  async getByClassTaskId(
+    classTaskId: string,
+  ): Promise<SubmissionWithRelations[]> {
     try {
       return await this.prisma.submission.findMany({
-        where: { listId },
+        where: { classTaskId },
         include: STUDENT_INCLUDE,
         orderBy: { submittedAt: 'desc' },
       });
@@ -59,7 +74,28 @@ export class PrismaSubmissionRepository implements SubmissionRepository {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new ApplicationError(
           400,
-          'Erro ao buscar submissões da lista',
+          'Erro ao buscar submissões da tarefa na turma',
+          error,
+        );
+      }
+      throw error;
+    }
+  }
+
+  async getByClassTaskListId(
+    classTaskListId: string,
+  ): Promise<SubmissionWithRelations[]> {
+    try {
+      return await this.prisma.submission.findMany({
+        where: { classTaskListId },
+        include: STUDENT_INCLUDE,
+        orderBy: { submittedAt: 'desc' },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new ApplicationError(
+          400,
+          'Erro ao buscar submissões da tarefa na lista',
           error,
         );
       }
@@ -71,15 +107,21 @@ export class PrismaSubmissionRepository implements SubmissionRepository {
     studentId: string,
     isWidget: boolean = false,
   ): Promise<SubmissionWithRelations[]> {
-    const include: Prisma.SubmissionInclude = {
-      task: true,
-    };
-
-    if (isWidget) {
-      include.task = {
-        select: { taskId: true, title: true } satisfies Prisma.TaskSelect,
-      };
-    }
+    const include: Prisma.SubmissionInclude = isWidget
+      ? {
+          task: { select: { taskId: true, title: true } },
+          classTask: {
+            include: { task: { select: { taskId: true, title: true } } },
+          },
+          classTaskList: {
+            include: {
+              classTask: {
+                include: { task: { select: { taskId: true, title: true } } },
+              },
+            },
+          },
+        }
+      : FULL_INCLUDE;
 
     try {
       return await this.prisma.submission.findMany({
@@ -87,7 +129,7 @@ export class PrismaSubmissionRepository implements SubmissionRepository {
         include,
         orderBy: { updatedAt: 'desc' },
         take: isWidget ? 5 : undefined,
-      });
+      }) as unknown as SubmissionWithRelations[];
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new ApplicationError(400, 'Erro ao buscar feedbacks', error);

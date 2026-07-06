@@ -42,11 +42,22 @@ export class SubmissionController {
     return this.submissionService.getByTaskId(taskId);
   }
 
-  @Get('list/:listId')
+  @Get('class-task/:classTaskId')
   @Roles(Role.PROFESSOR, Role.ADMIN)
-  @ApiOperation({ summary: 'Lista submissões de uma lista' })
-  getByListId(@Param('listId', ParseUUIDPipe) listId: string) {
-    return this.submissionService.getByListId(listId);
+  @ApiOperation({ summary: 'Lista submissões de uma tarefa na turma' })
+  getByClassTaskId(
+    @Param('classTaskId', ParseUUIDPipe) classTaskId: string,
+  ) {
+    return this.submissionService.getByClassTaskId(classTaskId);
+  }
+
+  @Get('class-task-list/:classTaskListId')
+  @Roles(Role.PROFESSOR, Role.ADMIN)
+  @ApiOperation({ summary: 'Lista submissões de uma tarefa em uma lista' })
+  getByClassTaskListId(
+    @Param('classTaskListId', ParseUUIDPipe) classTaskListId: string,
+  ) {
+    return this.submissionService.getByClassTaskListId(classTaskListId);
   }
 
   @Put('feedback/:id')

@@ -39,6 +39,9 @@ export abstract class ClassTaskRepository {
     classId: string,
     taskIds: string[],
   ): Promise<{ count: number }>;
+  abstract getById(
+    classTaskId: string,
+  ): Promise<ClassTaskWithRelations | null>;
   abstract getByIds(
     classId: string,
     taskId: string,
@@ -48,6 +51,10 @@ export abstract class ClassTaskRepository {
     query: GetClassTasksQueryDto,
   ): Promise<{ classTasks: ClassTaskWithRelations[]; total: number }>;
   abstract getByTaskId(taskId: string): Promise<ClassTaskWithRelations[]>;
+  abstract getByClassIdAndTaskIds(
+    classId: string,
+    taskIds: string[],
+  ): Promise<ClassTask[]>;
   abstract delete(classId: string, taskId: string): Promise<void>;
   abstract deleteMany(
     classId: string,

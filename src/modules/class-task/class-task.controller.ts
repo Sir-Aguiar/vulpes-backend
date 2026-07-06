@@ -53,17 +53,6 @@ export class ClassTaskController {
     return paginate(classTasks.map(serializeClassTask), total, query);
   }
 
-  @Delete(':classId/:taskId')
-  @Roles(Role.PROFESSOR, Role.ADMIN)
-  @ApiOperation({ summary: 'Desvincula tarefa de uma turma' })
-  delete(
-    @Param('classId', ParseUUIDPipe) classId: string,
-    @Param('taskId', ParseUUIDPipe) taskId: string,
-    @CurrentUser() user: AuthUser,
-  ) {
-    return this.classTaskService.delete(classId, taskId, user);
-  }
-
   @Get('dashboard')
   @Roles(Role.PROFESSOR, Role.ADMIN)
   @ApiOperation({ summary: 'Dashboard de tarefas de uma turma' })
@@ -73,5 +62,28 @@ export class ClassTaskController {
     @Query('taskId', ParseUUIDPipe) taskId: string,
   ) {
     return this.classTaskService.getDashboardData(user, classId, taskId);
+  }
+
+  @Get(':classTaskId')
+  @Roles(Role.STUDENT, Role.PROFESSOR, Role.ADMIN)
+  @ApiOperation({
+    summary: 'Obtém uma tarefa vinculada a uma turma pelo classTaskId',
+  })
+  getById(
+    @Param('classTaskId', ParseUUIDPipe) classTaskId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.classTaskService.getById(classTaskId, user);
+  }
+
+  @Delete(':classId/:taskId')
+  @Roles(Role.PROFESSOR, Role.ADMIN)
+  @ApiOperation({ summary: 'Desvincula tarefa de uma turma' })
+  delete(
+    @Param('classId', ParseUUIDPipe) classId: string,
+    @Param('taskId', ParseUUIDPipe) taskId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.classTaskService.delete(classId, taskId, user);
   }
 }

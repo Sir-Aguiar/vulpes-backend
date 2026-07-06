@@ -84,7 +84,29 @@ export class ListService {
         );
       }
 
-      await this.classTaskListRepository.createMany(list.listId, tasks);
+      // Resolve taskId → classTaskId para o novo modelo ClassTaskList
+      const classTasks = await this.classTaskRepository.getByClassIdAndTaskIds(
+        listData.classId,
+        taskIds,
+      );
+      const classTaskIdByTaskId = new Map(
+        classTasks.map((ct) => [ct.taskId, ct.classTaskId]),
+      );
+
+      const classTaskListItems = tasks
+        .map((task) => ({
+          classTaskId: classTaskIdByTaskId.get(task.taskId),
+          weight: task.weight,
+        }))
+        .filter(
+          (item): item is { classTaskId: string; weight: number } =>
+            item.classTaskId !== undefined,
+        );
+
+      await this.classTaskListRepository.createMany(
+        list.listId,
+        classTaskListItems,
+      );
     }
 
     return { ...list, tasksAdded: tasks.length };
@@ -96,14 +118,6 @@ export class ListService {
     if (!list) throw new NotFoundException('Lista não encontrada');
 
     await this.assertReadAccess(list.classId, list.class?.professorId, user);
-
-    // Se o usuário for um aluno, retorna somente as submissões dele
-    if (!isAdmin(user) && !isClassOwner(user, list.class?.professorId ?? '')) {
-      const filteredSubmissions = list.submissions.filter(
-        (s) => s.studentId === user.userId,
-      );
-      return { ...list, submissions: filteredSubmissions };
-    }
 
     return list;
   }

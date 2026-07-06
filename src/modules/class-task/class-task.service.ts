@@ -16,6 +16,7 @@ import { AuthUser } from '../../common/types/auth-user.type';
 import { ClassStudentRepository } from '../class-student/repositories/class-student.repository';
 import { ClassRepository } from '../class/repositories/class.repository';
 import { TaskRepository } from '../task/repositories/task.repository';
+import { serializeClassTask } from './class-task.serializer';
 import { CreateClassTaskDto } from './dto/create-class-task.dto';
 import { GetClassTasksQueryDto } from './dto/get-class-tasks.dto';
 import { ClassTaskRepository } from './repositories/class-task.repository';
@@ -73,6 +74,29 @@ export class ClassTaskService {
     }
 
     return this.classTaskRepository.create(data);
+  }
+
+  async getById(classTaskId: string, user: AuthUser) {
+    const classTask = await this.classTaskRepository.getById(classTaskId);
+    if (!classTask)
+      throw new NotFoundException('Tarefa na turma não encontrada');
+
+    const isMember = await this.classStudentRepository.isStudentInClass(
+      classTask.classId,
+      user.userId,
+    );
+
+    if (
+      !isClassOwner(user, classTask.class?.professorId ?? '') &&
+      !isAdmin(user) &&
+      !isMember
+    ) {
+      throw new ForbiddenException(
+        'Você não tem permissão para ver esta tarefa',
+      );
+    }
+
+    return serializeClassTask(classTask);
   }
 
   /**

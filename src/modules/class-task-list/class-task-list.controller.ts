@@ -52,15 +52,13 @@ export class ClassTaskListController {
     return paginate(tasks, total, query);
   }
 
-  @Delete(':classId/:taskId/:listId')
+  @Delete(':classTaskListId')
   @Roles(Role.PROFESSOR, Role.ADMIN)
   @ApiOperation({ summary: 'Remove tarefa de uma lista' })
   delete(
-    @Param('classId', ParseUUIDPipe) classId: string,
-    @Param('taskId', ParseUUIDPipe) taskId: string,
-    @Param('listId', ParseUUIDPipe) listId: string,
+    @Param('classTaskListId', ParseUUIDPipe) classTaskListId: string,
     @CurrentUser() user: AuthUser,
   ) {
-    return this.classTaskListService.delete(classId, taskId, listId, user);
+    return this.classTaskListService.delete(classTaskListId, user);
   }
 }

@@ -27,13 +27,17 @@ export class ClassTaskListService {
   ) {}
 
   async create(data: CreateClassTaskListDto, user: AuthUser) {
-    const list = await this.listRepository.getById(data.listId);
+    const [classTask, list] = await Promise.all([
+      this.classTaskRepository.getById(data.classTaskId),
+      this.listRepository.getById(data.listId),
+    ]);
 
+    if (!classTask) throw new NotFoundException('Tarefa na turma não encontrada');
     if (!list) throw new NotFoundException('Lista não encontrada');
 
-    if (list.classId !== data.classId) {
+    if (classTask.classId !== list.classId) {
       throw new BadRequestException(
-        'A lista não pertence à turma especificada',
+        'A tarefa e a lista não pertencem à mesma turma',
       );
     }
 
@@ -42,17 +46,6 @@ export class ClassTaskListService {
       list.class?.professorId ?? '',
       'Você não tem permissão para adicionar tarefas a esta lista',
     );
-
-    const classTask = await this.classTaskRepository.getByIds(
-      data.classId,
-      data.taskId,
-    );
-
-    if (!classTask) {
-      throw new BadRequestException(
-        'A tarefa deve estar associada à turma antes de ser adicionada à lista',
-      );
-    }
 
     if (classTask.task && !classTask.task.isVisible) {
       throw new BadRequestException(
@@ -89,21 +82,22 @@ export class ClassTaskListService {
       listId,
       query,
     );
-    const tasks = result.classTaskLists.map(({ task, weight }) => ({
-      ...task,
+    const tasks = result.classTaskLists.map(({ classTask, weight }) => ({
+      ...classTask?.task,
+      classTaskId: classTask?.classTaskId,
       weight: Number(weight),
     }));
     return { tasks, total: result.total };
   }
 
-  async delete(
-    classId: string,
-    taskId: string,
-    listId: string,
-    user: AuthUser,
-  ) {
-    void classId;
-    const list = await this.listRepository.getById(listId);
+  async delete(classTaskListId: string, user: AuthUser) {
+    const classTaskList =
+      await this.classTaskListRepository.getById(classTaskListId);
+
+    if (!classTaskList)
+      throw new NotFoundException('Vínculo de tarefa na lista não encontrado');
+
+    const list = await this.listRepository.getById(classTaskList.listId);
     if (!list) throw new NotFoundException('Lista não encontrada');
 
     ensureClassWriteAccess(
@@ -112,7 +106,7 @@ export class ClassTaskListService {
       'Você não tem permissão para remover tarefas desta lista',
     );
 
-    await this.classTaskListRepository.delete(taskId, listId);
+    await this.classTaskListRepository.delete(classTaskListId);
     return { message: 'Tarefa removida da lista com sucesso' };
   }
 }

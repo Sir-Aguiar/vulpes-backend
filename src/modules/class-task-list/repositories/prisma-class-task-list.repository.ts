@@ -1,29 +1,33 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, TaskList } from '@prisma/client';
+import { ClassTaskList, Prisma } from '@prisma/client';
 import { ApplicationError } from '../../../common/errors/application.error';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { CreateClassTaskListDto } from '../dto/create-class-task-list.dto';
 import { GetClassTaskListsQueryDto } from '../dto/get-class-task-lists.dto';
 import {
   ClassTaskListRepository,
+  ClassTaskListWeightInput,
   ClassTaskListWithRelations,
-  TaskListWeightInput,
 } from './class-task-list.repository';
 
-const TASK_INCLUDE = {
-  task: { include: { taskParams: true, taskTests: true } },
+const CLASS_TASK_LIST_INCLUDE = {
+  classTask: {
+    include: {
+      task: { include: { taskParams: true, taskTests: true } },
+    },
+  },
   list: true,
-} satisfies Prisma.TaskListInclude;
+} satisfies Prisma.ClassTaskListInclude;
 
 @Injectable()
 export class PrismaClassTaskListRepository implements ClassTaskListRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: CreateClassTaskListDto): Promise<TaskList> {
+  async create(data: CreateClassTaskListDto): Promise<ClassTaskList> {
     try {
-      return await this.prisma.taskList.create({
+      return await this.prisma.classTaskList.create({
         data: {
-          taskId: data.taskId,
+          classTaskId: data.classTaskId,
           listId: data.listId,
           weight: data.weight,
         },
@@ -49,11 +53,15 @@ export class PrismaClassTaskListRepository implements ClassTaskListRepository {
 
   async createMany(
     listId: string,
-    tasks: TaskListWeightInput[],
+    tasks: ClassTaskListWeightInput[],
   ): Promise<{ count: number }> {
     try {
-      const result = await this.prisma.taskList.createMany({
-        data: tasks.map(({ taskId, weight }) => ({ taskId, listId, weight })),
+      const result = await this.prisma.classTaskList.createMany({
+        data: tasks.map(({ classTaskId, weight }) => ({
+          classTaskId,
+          listId,
+          weight: weight ?? 1.0,
+        })),
         skipDuplicates: true,
       });
       return { count: result.count };
@@ -70,12 +78,19 @@ export class PrismaClassTaskListRepository implements ClassTaskListRepository {
   }
 
   getByIds(
-    taskId: string,
+    classTaskId: string,
     listId: string,
   ): Promise<ClassTaskListWithRelations | null> {
-    return this.prisma.taskList.findUnique({
-      where: { taskId_listId: { taskId, listId } },
-      include: TASK_INCLUDE,
+    return this.prisma.classTaskList.findFirst({
+      where: { classTaskId, listId },
+      include: CLASS_TASK_LIST_INCLUDE,
+    });
+  }
+
+  getById(classTaskListId: string): Promise<ClassTaskListWithRelations | null> {
+    return this.prisma.classTaskList.findUnique({
+      where: { classTaskListId },
+      include: CLASS_TASK_LIST_INCLUDE,
     });
   }
 
@@ -87,23 +102,23 @@ export class PrismaClassTaskListRepository implements ClassTaskListRepository {
     const skip = (page - 1) * limit;
 
     const [classTaskLists, total] = await this.prisma.$transaction([
-      this.prisma.taskList.findMany({
+      this.prisma.classTaskList.findMany({
         where: { listId },
-        include: TASK_INCLUDE,
+        include: CLASS_TASK_LIST_INCLUDE,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.taskList.count({ where: { listId } }),
+      this.prisma.classTaskList.count({ where: { listId } }),
     ]);
 
     return { classTaskLists, total };
   }
 
-  async delete(taskId: string, listId: string): Promise<void> {
+  async delete(classTaskListId: string): Promise<void> {
     try {
-      await this.prisma.taskList.delete({
-        where: { taskId_listId: { taskId, listId } },
+      await this.prisma.classTaskList.delete({
+        where: { classTaskListId },
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -126,11 +141,11 @@ export class PrismaClassTaskListRepository implements ClassTaskListRepository {
 
   async deleteMany(
     listId: string,
-    taskIds: string[],
+    classTaskIds: string[],
   ): Promise<{ count: number }> {
     try {
-      const result = await this.prisma.taskList.deleteMany({
-        where: { listId, taskId: { in: taskIds } },
+      const result = await this.prisma.classTaskList.deleteMany({
+        where: { listId, classTaskId: { in: classTaskIds } },
       });
       return { count: result.count };
     } catch (error) {
