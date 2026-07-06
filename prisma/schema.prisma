@@ -67,7 +67,6 @@ model Task {
   creator     User         @relation(fields: [creatorId], references: [userId], onDelete: Cascade)
 
   classTasks ClassTask[]
-  taskLists  TaskList[]
 }
 
 model TaskParam {
@@ -128,17 +127,19 @@ model StudentClassPermissionRequest {
 model Submission {
   submissionId      String   @id @default(uuid())
   studentId         String
-  taskId            String
-  listId            String?
+  taskId            String?
+  classTaskListId   String?
+  classTaskId       String?
   code              String   @db.Text
   isCorrect         Boolean  @default(false)
   submittedAt       DateTime @default(now())
   professorComments String?  @db.Text
   updatedAt         DateTime @default(now()) @updatedAt
 
-  task    Task  @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
-  student User  @relation(fields: [studentId], references: [userId], onDelete: Cascade)
-  list    List? @relation(fields: [listId], references: [listId], onDelete: SetNull)
+  student       User           @relation(fields: [studentId], references: [userId], onDelete: Cascade)
+  task          Task?          @relation(fields: [taskId], references: [taskId], onDelete: SetNull)
+  classTask     ClassTask?     @relation(fields: [classTaskId], references: [classTaskId], onDelete: SetNull)
+  classTaskList ClassTaskList? @relation(fields: [classTaskListId], references: [classTaskListId], onDelete: SetNull)
 }
 
 model Class {
@@ -169,16 +170,6 @@ model ClassStudent {
   @@id([classId, studentId])
 }
 
-model ClassTask {
-  classId   String
-  taskId    String
-  createdAt DateTime @default(now())
-  class     Class    @relation(fields: [classId], references: [classId], onDelete: Cascade)
-  task      Task     @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
-
-  @@id([classId, taskId])
-}
-
 model List {
   listId          String   @id @default(uuid())
   classId         String
@@ -190,20 +181,31 @@ model List {
   updatedAt       DateTime @updatedAt
   class           Class    @relation(fields: [classId], references: [classId], onDelete: Cascade)
 
-  submissions Submission[]
-  taskLists   TaskList[]
+  classTaskLists ClassTaskList[]
 }
 
-model TaskList {
-  taskId String
-  listId String
-  weight Decimal @default(1.0)
+model ClassTask {
+  classTaskId String   @id @default(uuid())
+  classId     String
+  taskId      String
+  createdAt   DateTime @default(now())
 
-  createdAt DateTime @default(now())
-  list      List     @relation(fields: [listId], references: [listId], onDelete: Cascade)
-  task      Task     @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+  class          Class           @relation(fields: [classId], references: [classId], onDelete: Cascade)
+  task           Task            @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+  classTaskLists ClassTaskList[]
+  submissions    Submission[]
+}
 
-  @@id([taskId, listId])
+model ClassTaskList {
+  classTaskListId String  @id @default(uuid())
+  classTaskId     String
+  listId          String
+  weight          Decimal @default(1.0)
+
+  createdAt   DateTime     @default(now())
+  list        List         @relation(fields: [listId], references: [listId], onDelete: Cascade)
+  classTask   ClassTask    @relation(fields: [classTaskId], references: [classTaskId], onDelete: Cascade)
+  submissions Submission[]
 }
 
 model ResetPasswordOrder {
