@@ -17,6 +17,7 @@ import { paginate } from '../../common/pagination/pagination.types';
 import type { AuthUser } from '../../common/types/auth-user.type';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { GetLinkableTasksQueryDto } from './dto/get-linkable-tasks.dto';
+import { GetPublishedTasksQueryDto } from './dto/get-published-tasks.dto';
 import { GetTasksQueryDto } from './dto/get-tasks.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskService } from './task.service';
@@ -83,6 +84,22 @@ export class TaskController {
       query,
       user,
     );
+    return paginate(tasks, total, query);
+  }
+
+  @Get('/published')
+  @Roles(Role.STUDENT, Role.PROFESSOR, Role.ADMIN)
+  @ApiOperation({
+    summary: 'Catálogo público de tarefas (homepage)',
+    description:
+      'Lista tarefas publicadas e visíveis, sem contexto de turma ou lista. ' +
+      'Todos os perfis recebem o mesmo catálogo; o acesso é via `taskId`. ' +
+      'Paginação padrão: 15/página (máx. 20). Busca por título (`search`). ' +
+      'Ordenação: `sortBy=createdAt|title` com `order=asc|desc` ' +
+      '(default: createdAt desc).',
+  })
+  async getPublished(@Query() query: GetPublishedTasksQueryDto) {
+    const { tasks, total } = await this.taskService.getPublishedTasks(query);
     return paginate(tasks, total, query);
   }
 

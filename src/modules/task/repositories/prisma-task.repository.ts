@@ -3,6 +3,10 @@ import { Prisma } from '@prisma/client';
 import { ApplicationError } from '../../../common/errors/application.error';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { LinkableTask } from '../dto/get-linkable-tasks.dto';
+import {
+  GetPublishedTasksQueryDto,
+  PublishedTask,
+} from '../dto/get-published-tasks.dto';
 import { GetTasksQueryDto } from '../dto/get-tasks.dto';
 import { UpdateTaskDto } from '../dto/update-task.dto';
 import { TaskWithRelations } from '../entities/task.entity';
@@ -21,6 +25,18 @@ const LINKABLE_TASK_SELECT = {
   createdAt: true,
   isPublic: true,
   isVisible: true,
+} satisfies Prisma.TaskSelect;
+
+const PUBLISHED_TASK_SELECT = {
+  taskId: true,
+  creatorId: true,
+  title: true,
+  description: true,
+  createdAt: true,
+  updatedAt: true,
+  isPublic: true,
+  isVisible: true,
+  creator: { select: { userId: true, name: true } },
 } satisfies Prisma.TaskSelect;
 
 const TASK_INCLUDE = {
@@ -224,5 +240,45 @@ export class PrismaTaskRepository implements TaskRepository {
     ]);
 
     return { tasks, total };
+  }
+
+  /**
+   * Catálogo público para a homepage: tarefas publicadas e visíveis,
+   * independentes de turma ou lista. Todos os perfis recebem o mesmo
+   * conjunto; o acesso à tarefa é sempre via `taskId`.
+   */
+  async getPublishedTasks(
+    query: GetPublishedTasksQueryDto,
+  ): Promise<{ tasks: PublishedTask[]; total: number }> {
+    const { page, limit, search, sortBy, order } = query;
+    const skip = (page - 1) * limit;
+
+    const filters: Prisma.TaskWhereInput[] = [
+      { deletedAt: null },
+      { isPublic: true },
+      { isVisible: true },
+    ];
+
+    if (search) {
+      filters.push({ title: { contains: search, mode: 'insensitive' } });
+    }
+
+    const where: Prisma.TaskWhereInput = { AND: filters };
+    const orderBy: Prisma.TaskOrderByWithRelationInput = {
+      [sortBy]: order,
+    };
+
+    const [tasks, total] = await this.prisma.$transaction([
+      this.prisma.task.findMany({
+        where,
+        select: PUBLISHED_TASK_SELECT,
+        orderBy,
+        skip,
+        take: limit,
+      }),
+      this.prisma.task.count({ where }),
+    ]);
+
+    return { tasks: tasks as PublishedTask[], total };
   }
 }

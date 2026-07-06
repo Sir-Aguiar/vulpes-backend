@@ -14,6 +14,7 @@ import { ClassTaskRepository } from '../class-task/repositories/class-task.repos
 import { ClassRepository } from '../class/repositories/class.repository';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { GetLinkableTasksQueryDto } from './dto/get-linkable-tasks.dto';
+import { GetPublishedTasksQueryDto } from './dto/get-published-tasks.dto';
 import { GetTasksQueryDto } from './dto/get-tasks.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskWithRelations } from './entities/task.entity';
@@ -74,6 +75,10 @@ export class TaskService {
 
   getAll(query: GetTasksQueryDto) {
     return this.taskRepository.getAll(query);
+  }
+
+  getPublishedTasks(query: GetPublishedTasksQueryDto) {
+    return this.taskRepository.getPublishedTasks(query);
   }
 
   async update(taskId: string, data: UpdateTaskDto, user: AuthUser) {

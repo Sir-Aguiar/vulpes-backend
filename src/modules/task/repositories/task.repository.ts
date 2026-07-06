@@ -1,5 +1,9 @@
 import { CreateTaskDto } from '../dto/create-task.dto';
 import { LinkableTask } from '../dto/get-linkable-tasks.dto';
+import {
+  GetPublishedTasksQueryDto,
+  PublishedTask,
+} from '../dto/get-published-tasks.dto';
 import { GetTasksQueryDto } from '../dto/get-tasks.dto';
 import { UpdateTaskDto } from '../dto/update-task.dto';
 import { TaskWithRelations } from '../entities/task.entity';
@@ -34,4 +38,7 @@ export abstract class TaskRepository {
     creatorId: string,
     options: LinkableTasksOptions,
   ): Promise<{ tasks: LinkableTask[]; total: number }>;
+  abstract getPublishedTasks(
+    query: GetPublishedTasksQueryDto,
+  ): Promise<{ tasks: PublishedTask[]; total: number }>;
 }
