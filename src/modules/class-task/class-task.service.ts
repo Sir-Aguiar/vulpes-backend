@@ -19,6 +19,7 @@ import { TaskRepository } from '../task/repositories/task.repository';
 import { serializeClassTask } from './class-task.serializer';
 import { CreateClassTaskDto } from './dto/create-class-task.dto';
 import { GetClassTasksQueryDto } from './dto/get-class-tasks.dto';
+import { MY_TASKS_PER_CLASS, MyTasksResponse } from './dto/my-tasks.dto';
 import { ClassTaskRepository } from './repositories/class-task.repository';
 
 @Injectable()
@@ -129,6 +130,51 @@ export class ClassTaskService {
     return this.classTaskRepository.getByClassId(classId, query);
   }
 
+  /**
+   * Página "Minhas tarefas": tarefas visíveis das turmas em que o aluno está
+   * matriculado, agrupadas por turma (máx. 5 mais recentes por turma).
+   */
+  async getMyTasks(user: AuthUser): Promise<MyTasksResponse> {
+    const rows = await this.classTaskRepository.getVisibleClassTasksByStudentId(
+      user.userId,
+    );
+
+    const grouped = new Map<
+      string,
+      {
+        class: (typeof rows)[number]['class'];
+        tasks: (typeof rows)[number][];
+      }
+    >();
+
+    for (const row of rows) {
+      const section = grouped.get(row.class.classId);
+      if (section) {
+        section.tasks.push(row);
+        continue;
+      }
+      grouped.set(row.class.classId, { class: row.class, tasks: [row] });
+    }
+
+    const classes = [...grouped.values()]
+      .sort((a, b) => a.class.name.localeCompare(b.class.name, 'pt-BR'))
+      .map(({ class: classData, tasks }) => ({
+        class: classData,
+        tasks: tasks
+          .slice(0, MY_TASKS_PER_CLASS)
+          .map(({ classTaskId, taskId, createdAt, task }) => ({
+            classTaskId,
+            taskId,
+            createdAt,
+            task,
+          })),
+        totalTasks: tasks.length,
+        hasMore: tasks.length > MY_TASKS_PER_CLASS,
+      }));
+
+    return { classes };
+  }
+
   async delete(classId: string, taskId: string, user: AuthUser) {
     const classData = await this.classRepository.getById(classId);
     if (!classData) throw new NotFoundException('Turma não encontrada');
@@ -153,6 +199,13 @@ export class ClassTaskService {
 
     ensureResourceOwnership(user, classData.professorId);
 
-    return this.classTaskRepository.getDashboardData(classId, taskId);
+    const classTask = await this.classTaskRepository.getByIds(classId, taskId);
+    if (!classTask)
+      throw new NotFoundException('Tarefa não vinculada a esta turma');
+
+    return this.classTaskRepository.getDashboardData(
+      classId,
+      classTask.classTaskId,
+    );
   }
 }

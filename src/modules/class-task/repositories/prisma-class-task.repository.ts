@@ -2,12 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { ClassTask, Prisma } from '@prisma/client';
 import { ApplicationError } from '../../../common/errors/application.error';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
+import { ClassTaskDashboardData } from '../dto/dashboard.dto';
 import { CreateClassTaskDto } from '../dto/create-class-task.dto';
 import { GetClassTasksQueryDto } from '../dto/get-class-tasks.dto';
+import { MyClassTaskRow } from '../dto/my-tasks.dto';
 import {
   ClassTaskRepository,
   ClassTaskWithRelations,
-  IDashboardData,
 } from './class-task.repository';
 
 const TASK_INCLUDE = {
@@ -26,6 +27,21 @@ const CLASS_SELECT = {
   code: true,
   professorId: true,
 } satisfies Prisma.ClassSelect;
+
+const MY_TASKS_SELECT = {
+  classTaskId: true,
+  taskId: true,
+  createdAt: true,
+  class: { select: { classId: true, name: true, code: true } },
+  task: {
+    select: {
+      taskId: true,
+      title: true,
+      description: true,
+      creator: { select: { userId: true, name: true } },
+    },
+  },
+} satisfies Prisma.ClassTaskSelect;
 
 @Injectable()
 export class PrismaClassTaskRepository implements ClassTaskRepository {
@@ -186,8 +202,8 @@ export class PrismaClassTaskRepository implements ClassTaskRepository {
 
   async getDashboardData(
     classId: string,
-    taskId: string,
-  ): Promise<IDashboardData> {
+    classTaskId: string,
+  ): Promise<ClassTaskDashboardData> {
     const classStudents = await this.prisma.classStudent.findMany({
       where: { classId },
       include: { student: { select: { userId: true, name: true } } },
@@ -195,56 +211,107 @@ export class PrismaClassTaskRepository implements ClassTaskRepository {
 
     const studentIds = classStudents.map((student) => student.studentId);
 
-    const classTask = await this.prisma.classTask.findFirst({
-      where: { classId, taskId },
-    });
-
     const submissions = await this.prisma.submission.findMany({
       where: {
+        classTaskId,
         studentId: { in: studentIds },
-        OR: [
-          { taskId },
-          ...(classTask
-            ? [
-                { classTaskId: classTask.classTaskId },
-                {
-                  classTaskList: { classTaskId: classTask.classTaskId },
-                },
-              ]
-            : []),
-        ],
       },
       orderBy: { submittedAt: 'desc' },
       select: {
         submissionId: true,
         studentId: true,
-        code: true,
         isCorrect: true,
         submittedAt: true,
         professorComments: true,
       },
     });
 
-    const result: IDashboardData = { students: [] };
-
-    for (const student of classStudents) {
-      const lastSubmission = submissions.find(
-        (submission) => submission.studentId === student.studentId,
-      )!;
-
-      result.students.push({
-        studentId: student.studentId,
-        name: student.student.name,
-        lastSubmission: {
-          submissionId: lastSubmission.submissionId,
-          isCorrect: lastSubmission.isCorrect,
-          submittedAt: lastSubmission.submittedAt,
-          code: lastSubmission.code,
-          professorComments: lastSubmission.professorComments,
-        },
-      });
+    const submissionsByStudent = new Map<string, typeof submissions>();
+    for (const submission of submissions) {
+      const group = submissionsByStudent.get(submission.studentId);
+      if (group) {
+        group.push(submission);
+        continue;
+      }
+      submissionsByStudent.set(submission.studentId, [submission]);
     }
 
-    return result;
+    let studentsWithSubmission = 0;
+    let studentsCorrect = 0;
+    let pendingFeedbackCount = 0;
+
+    const students = classStudents.map((student) => {
+      const studentSubmissions =
+        submissionsByStudent.get(student.studentId) ?? [];
+      const lastSubmission = studentSubmissions[0] ?? null;
+
+      const status: ClassTaskDashboardData['students'][number]['status'] =
+        !lastSubmission
+          ? 'NOT_SUBMITTED'
+          : lastSubmission.isCorrect
+            ? 'CORRECT'
+            : 'INCORRECT';
+
+      const hasPendingFeedback =
+        lastSubmission !== null && lastSubmission.professorComments === null;
+
+      if (lastSubmission) studentsWithSubmission += 1;
+      if (status === 'CORRECT') studentsCorrect += 1;
+      if (hasPendingFeedback) pendingFeedbackCount += 1;
+
+      return {
+        studentId: student.studentId,
+        name: student.student.name,
+        status,
+        submissionsCount: studentSubmissions.length,
+        lastSubmissionId: lastSubmission?.submissionId ?? null,
+        lastSubmittedAt: lastSubmission?.submittedAt ?? null,
+        professorComments: lastSubmission?.professorComments ?? null,
+        hasPendingFeedback,
+      };
+    });
+
+    const totalStudents = classStudents.length;
+    const studentsWithoutSubmission = totalStudents - studentsWithSubmission;
+
+    return {
+      kpis: {
+        totalStudents,
+        studentsWithSubmission,
+        studentsWithoutSubmission,
+        studentsCorrect,
+        deliveryRate:
+          totalStudents === 0 ? 0 : studentsWithSubmission / totalStudents,
+        accuracyRate:
+          studentsWithSubmission === 0
+            ? 0
+            : studentsCorrect / studentsWithSubmission,
+        pendingFeedbackCount,
+      },
+      students,
+    };
+  }
+
+  async getVisibleClassTasksByStudentId(
+    studentId: string,
+  ): Promise<MyClassTaskRow[]> {
+    const classTasks = await this.prisma.classTask.findMany({
+      where: {
+        class: { classStudents: { some: { studentId } } },
+        task: { isVisible: true, deletedAt: null },
+      },
+      select: MY_TASKS_SELECT,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return classTasks
+      .filter((item) => item.task !== null && item.class !== null)
+      .map((item) => ({
+        classTaskId: item.classTaskId,
+        taskId: item.taskId,
+        createdAt: item.createdAt,
+        class: item.class,
+        task: item.task,
+      }));
   }
 }

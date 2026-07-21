@@ -55,13 +55,35 @@ export class ClassTaskController {
 
   @Get('dashboard')
   @Roles(Role.PROFESSOR, Role.ADMIN)
-  @ApiOperation({ summary: 'Dashboard de tarefas de uma turma' })
+  @ApiOperation({
+    summary: 'Dashboard de envios de uma tarefa em uma turma',
+    description:
+      'Retorna KPIs (taxa de entrega, taxa de acerto, alunos pendentes e ' +
+      'feedbacks pendentes) e uma tabela com todos os alunos matriculados ' +
+      'na turma, contendo status do envio (não enviou / enviou correto / ' +
+      'enviou errado), quantidade de envios e data do último envio. ' +
+      'Considera apenas submissions feitas diretamente para o classTask ' +
+      '(ignora envios feitos via lista).',
+  })
   getDashboardData(
     @CurrentUser() user: AuthUser,
     @Query('classId', ParseUUIDPipe) classId: string,
     @Query('taskId', ParseUUIDPipe) taskId: string,
   ) {
     return this.classTaskService.getDashboardData(user, classId, taskId);
+  }
+
+  @Get('my-tasks')
+  @Roles(Role.STUDENT)
+  @ApiOperation({
+    summary: 'Minhas tarefas (agrupadas por turma)',
+    description:
+      'Retorna tarefas visíveis vinculadas às turmas do aluno, agrupadas ' +
+      'por turma. Exibe no máximo as 5 tarefas mais recentes de cada turma. ' +
+      'Acesso às tarefas via `classTaskId`.',
+  })
+  getMyTasks(@CurrentUser() user: AuthUser) {
+    return this.classTaskService.getMyTasks(user);
   }
 
   @Get(':classTaskId')

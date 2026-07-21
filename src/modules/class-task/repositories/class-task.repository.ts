@@ -1,6 +1,8 @@
 import { ClassTask, Task } from '@prisma/client';
+import { ClassTaskDashboardData } from '../dto/dashboard.dto';
 import { CreateClassTaskDto } from '../dto/create-class-task.dto';
 import { GetClassTasksQueryDto } from '../dto/get-class-tasks.dto';
+import { MyClassTaskRow } from '../dto/my-tasks.dto';
 
 export interface ClassTaskWithRelations extends ClassTask {
   task?: Task & {
@@ -19,29 +21,13 @@ export interface ClassTaskWithRelations extends ClassTask {
   };
 }
 
-export interface IDashboardData {
-  students: {
-    studentId: string;
-    name: string;
-    lastSubmission: {
-      submissionId: string;
-      isCorrect: boolean;
-      submittedAt: Date;
-      code: string;
-      professorComments: string | null;
-    };
-  }[];
-}
-
 export abstract class ClassTaskRepository {
   abstract create(data: CreateClassTaskDto): Promise<ClassTask>;
   abstract createMany(
     classId: string,
     taskIds: string[],
   ): Promise<{ count: number }>;
-  abstract getById(
-    classTaskId: string,
-  ): Promise<ClassTaskWithRelations | null>;
+  abstract getById(classTaskId: string): Promise<ClassTaskWithRelations | null>;
   abstract getByIds(
     classId: string,
     taskId: string,
@@ -67,6 +53,9 @@ export abstract class ClassTaskRepository {
   ): Promise<string[]>;
   abstract getDashboardData(
     classId: string,
-    taskId: string,
-  ): Promise<IDashboardData>;
+    classTaskId: string,
+  ): Promise<ClassTaskDashboardData>;
+  abstract getVisibleClassTasksByStudentId(
+    studentId: string,
+  ): Promise<MyClassTaskRow[]>;
 }
