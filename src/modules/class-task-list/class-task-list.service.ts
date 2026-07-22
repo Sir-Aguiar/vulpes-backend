@@ -84,11 +84,14 @@ export class ClassTaskListService {
       listId,
       query,
     );
-    const tasks = result.classTaskLists.map(({ classTask, weight }) => ({
-      ...classTask?.task,
-      classTaskId: classTask?.classTaskId,
-      weight: Number(weight),
-    }));
+    const tasks = result.classTaskLists.map(
+      ({ classTaskListId, classTask, weight }) => ({
+        ...classTask?.task,
+        classTaskId: classTask?.classTaskId,
+        classTaskListId,
+        weight: Number(weight),
+      }),
+    );
     return { tasks, total: result.total };
   }
 
