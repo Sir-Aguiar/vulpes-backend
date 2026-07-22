@@ -103,6 +103,15 @@ export class PrismaSubmissionRepository implements SubmissionRepository {
     }
   }
 
+  async countByStudentAndClassTaskListId(
+    studentId: string,
+    classTaskListId: string,
+  ): Promise<number> {
+    return this.prisma.submission.count({
+      where: { studentId, classTaskListId },
+    });
+  }
+
   async getFeedbacks(
     studentId: string,
     isWidget: boolean = false,

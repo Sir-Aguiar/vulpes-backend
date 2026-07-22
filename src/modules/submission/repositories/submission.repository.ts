@@ -41,6 +41,10 @@ export abstract class SubmissionRepository {
   abstract getByClassTaskListId(
     classTaskListId: string,
   ): Promise<SubmissionWithRelations[]>;
+  abstract countByStudentAndClassTaskListId(
+    studentId: string,
+    classTaskListId: string,
+  ): Promise<number>;
   abstract getFeedbacks(
     studentId: string,
     isWidget: boolean,
