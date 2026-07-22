@@ -73,6 +73,10 @@ export class AuthService {
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
+    if (user.desativado) {
+      throw new UnauthorizedException('Conta desativada');
+    }
+
     return this.buildAuthResponse(user);
   }
 

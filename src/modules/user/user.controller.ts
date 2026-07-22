@@ -6,12 +6,19 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Patch,
+  Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { paginate } from '../../common/pagination/pagination.types';
 import type { AuthUser } from '../../common/types/auth-user.type';
+import { GetUsersQueryDto } from './dto/get-users.dto';
+import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { ChangePasswordDto, UpdateUserDto } from './dto/update-user.dto';
 import { UserService } from './user.service';
 
@@ -20,6 +27,19 @@ import { UserService } from './user.service';
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Get()
+  @Roles(Role.ADMIN)
+  @ApiOperation({
+    summary: 'Lista usuários cadastrados (ADMIN)',
+    description:
+      'Retorna uma lista paginada com busca por nome ou e-mail e ' +
+      'ordenação por data de criação (padrão: mais recentes primeiro).',
+  })
+  async getUsers(@Query() query: GetUsersQueryDto) {
+    const { users, total } = await this.userService.getUsers(query);
+    return paginate(users, total, query);
+  }
 
   @Patch('me')
   @HttpCode(HttpStatus.OK)
@@ -64,10 +84,27 @@ export class UserController {
   @Patch('desativar')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Desativa um usuário',
-    description: 'Recebe o id do usuário e o desativa',
+    summary: 'Desativa a conta do usuário autenticado',
+    description: 'Desativa a própria conta do usuário logado.',
   })
   deactivateUser(@CurrentUser() user: AuthUser): Promise<void> {
     return this.userService.deactivateUser(user);
+  }
+
+  @Patch(':userId/status')
+  @Roles(Role.ADMIN)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Ativa ou desativa um usuário (ADMIN)',
+    description:
+      'Atualiza o campo `desativado` do usuário informado. Um administrador ' +
+      'não pode desativar a própria conta.',
+  })
+  updateStatus(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body() body: UpdateUserStatusDto,
+    @CurrentUser() user: AuthUser,
+  ): Promise<void> {
+    return this.userService.updateStatus(userId, body, user);
   }
 }

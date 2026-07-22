@@ -1,20 +1,22 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
-  ForbiddenException,
-  InternalServerErrorException,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcryptjs';
 import { renderFile } from 'ejs';
 import { resolve } from 'path';
 import { AuthUser } from '../../common/types/auth-user.type';
+import { EnvService } from '../../config/env.service';
 import { EmailerService } from '../../infra/emailer/emailer.service';
+import { GetUsersQueryDto, UserListItem } from './dto/get-users.dto';
+import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { ChangePasswordDto, UpdateUserDto } from './dto/update-user.dto';
 import { UserRepository } from './repositories/user.repository';
-import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
-import { EnvService } from '../../config/env.service';
 
 /**
  * Template copiado para `dist/templates` no build (ver `nest-cli.json`).
@@ -127,6 +129,31 @@ export class UserService {
     const hashedPassword = await bcrypt.hash(data.newPassword, 10);
 
     await this.userRepository.updatePassword(userId, hashedPassword);
+  }
+
+  async getUsers(
+    query: GetUsersQueryDto,
+  ): Promise<{ users: UserListItem[]; total: number }> {
+    return this.userRepository.findMany(query);
+  }
+
+  async updateStatus(
+    targetUserId: string,
+    data: UpdateUserStatusDto,
+    currentUser: AuthUser,
+  ): Promise<void> {
+    if (data.desativado && targetUserId === currentUser.userId) {
+      throw new ForbiddenException(
+        'Você não pode desativar a própria conta',
+      );
+    }
+
+    const user = await this.userRepository.findById(targetUserId);
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    await this.userRepository.setDesativado(targetUserId, data.desativado);
   }
 
   async deactivateUser({ userId }: AuthUser): Promise<void> {
