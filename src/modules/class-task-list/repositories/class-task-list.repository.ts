@@ -1,4 +1,5 @@
 import { ClassTaskList } from '@prisma/client';
+import { ClassTaskListDashboardData } from '../dto/dashboard.dto';
 import { CreateClassTaskListDto } from '../dto/create-class-task-list.dto';
 import { GetClassTaskListsQueryDto } from '../dto/get-class-task-lists.dto';
 
@@ -54,4 +55,8 @@ export abstract class ClassTaskListRepository {
     listId: string,
     classTaskIds: string[],
   ): Promise<{ count: number }>;
+  abstract getDashboardData(
+    classId: string,
+    listId: string,
+  ): Promise<ClassTaskListDashboardData>;
 }

@@ -2,6 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { ClassTaskList, Prisma } from '@prisma/client';
 import { ApplicationError } from '../../../common/errors/application.error';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
+import {
+  ClassTaskListDashboardColumn,
+  ClassTaskListDashboardData,
+  SubmissionStatus,
+} from '../dto/dashboard.dto';
 import { CreateClassTaskListDto } from '../dto/create-class-task-list.dto';
 import { GetClassTaskListsQueryDto } from '../dto/get-class-task-lists.dto';
 import {
@@ -158,5 +163,175 @@ export class PrismaClassTaskListRepository implements ClassTaskListRepository {
       }
       throw error;
     }
+  }
+
+  async getDashboardData(
+    classId: string,
+    listId: string,
+  ): Promise<ClassTaskListDashboardData> {
+    const classTaskLists = await this.prisma.classTaskList.findMany({
+      where: { listId },
+      include: {
+        classTask: {
+          include: { task: { select: { taskId: true, title: true } } },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const classStudents = await this.prisma.classStudent.findMany({
+      where: { classId },
+      include: { student: { select: { userId: true, name: true } } },
+    });
+
+    const studentIds = classStudents.map((student) => student.studentId);
+    const classTaskListIds = classTaskLists.map(
+      (classTaskList) => classTaskList.classTaskListId,
+    );
+
+    const submissions = await this.prisma.submission.findMany({
+      where: {
+        classTaskListId: { in: classTaskListIds },
+        studentId: { in: studentIds },
+      },
+      orderBy: { submittedAt: 'desc' },
+      select: {
+        submissionId: true,
+        studentId: true,
+        classTaskListId: true,
+        isCorrect: true,
+        submittedAt: true,
+      },
+    });
+
+    const submissionsByCell = new Map<string, typeof submissions>();
+    for (const submission of submissions) {
+      const key = `${submission.classTaskListId}:${submission.studentId}`;
+      const group = submissionsByCell.get(key);
+      if (group) {
+        group.push(submission);
+        continue;
+      }
+      submissionsByCell.set(key, [submission]);
+    }
+
+    const columns: ClassTaskListDashboardColumn[] = classTaskLists.map(
+      (classTaskList, i) => {
+        let submittedCount = 0;
+        let correctCount = 0;
+
+        for (const studentId of studentIds) {
+          const last = submissionsByCell.get(
+            `${classTaskList.classTaskListId}:${studentId}`,
+          )?.[0];
+          if (last) {
+            submittedCount += 1;
+            if (last.isCorrect) correctCount += 1;
+          }
+        }
+
+        return {
+          classTaskListId: classTaskList.classTaskListId,
+          taskId: classTaskList.classTask?.taskId ?? '',
+          index: i + 1,
+          title: classTaskList.classTask?.task?.title ?? '',
+          weight: Number(classTaskList.weight),
+          submittedCount,
+          correctCount,
+          accuracyRate:
+            submittedCount === 0 ? 0 : correctCount / submittedCount,
+        };
+      },
+    );
+
+    const totalWeight = columns.reduce((sum, column) => sum + column.weight, 0);
+
+    let studentsWithoutSubmission = 0;
+    let completedStudents = 0;
+    let scoreSum = 0;
+
+    const students = classStudents.map((classStudent) => {
+      let submissionsCount = 0;
+      let submittedTasks = 0;
+      let earnedWeight = 0;
+      let lastSubmittedAt: Date | null = null;
+
+      const cells = columns.map((column) => {
+        const group = submissionsByCell.get(
+          `${column.classTaskListId}:${classStudent.studentId}`,
+        );
+        const last = group?.[0] ?? null;
+
+        if (last) {
+          submissionsCount += group!.length;
+          submittedTasks += 1;
+          if (!lastSubmittedAt || last.submittedAt > lastSubmittedAt) {
+            lastSubmittedAt = last.submittedAt;
+          }
+          if (last.isCorrect) earnedWeight += column.weight;
+        }
+
+        const status: SubmissionStatus = !last
+          ? 'NOT_SUBMITTED'
+          : last.isCorrect
+            ? 'CORRECT'
+            : 'INCORRECT';
+
+        return { classTaskListId: column.classTaskListId, status };
+      });
+
+      const score = totalWeight === 0 ? 0 : (earnedWeight / totalWeight) * 100;
+      const roundedScore = Math.round(score * 100) / 100;
+
+      if (submissionsCount === 0) studentsWithoutSubmission += 1;
+      if (columns.length > 0 && submittedTasks === columns.length) {
+        completedStudents += 1;
+      }
+      scoreSum += roundedScore;
+
+      return {
+        studentId: classStudent.studentId,
+        name: classStudent.student.name,
+        cells,
+        score: roundedScore,
+        submissionsCount,
+        lastSubmittedAt,
+      };
+    });
+
+    const totalStudents = classStudents.length;
+    const columnsWithSubmissions = columns.filter(
+      (column) => column.submittedCount > 0,
+    );
+    const hardestColumn =
+      columnsWithSubmissions.length === 0
+        ? null
+        : columnsWithSubmissions.reduce((min, column) =>
+            column.accuracyRate < min.accuracyRate ? column : min,
+          );
+
+    return {
+      columns,
+      kpis: {
+        totalStudents,
+        averageScore:
+          totalStudents === 0
+            ? 0
+            : Math.round((scoreSum / totalStudents) * 100) / 100,
+        completionRate:
+          totalStudents === 0 ? 0 : completedStudents / totalStudents,
+        studentsWithoutSubmission,
+        hardestTask: hardestColumn
+          ? {
+              classTaskListId: hardestColumn.classTaskListId,
+              taskId: hardestColumn.taskId,
+              index: hardestColumn.index,
+              title: hardestColumn.title,
+              accuracyRate: hardestColumn.accuracyRate,
+            }
+          : null,
+      },
+      students,
+    };
   }
 }

@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import {
   ensureClassWriteAccess,
+  ensureResourceOwnership,
   isAdmin,
   isClassOwner,
 } from '../../common/authorization/authorization.helpers';
@@ -32,7 +33,8 @@ export class ClassTaskListService {
       this.listRepository.getById(data.listId),
     ]);
 
-    if (!classTask) throw new NotFoundException('Tarefa na turma não encontrada');
+    if (!classTask)
+      throw new NotFoundException('Tarefa na turma não encontrada');
     if (!list) throw new NotFoundException('Lista não encontrada');
 
     if (classTask.classId !== list.classId) {
@@ -108,5 +110,18 @@ export class ClassTaskListService {
 
     await this.classTaskListRepository.delete(classTaskListId);
     return { message: 'Tarefa removida da lista com sucesso' };
+  }
+
+  async getDashboardData(user: AuthUser, classId: string, listId: string) {
+    const list = await this.listRepository.getById(listId);
+    if (!list) throw new NotFoundException('Lista não encontrada');
+
+    if (list.classId !== classId) {
+      throw new NotFoundException('Lista não encontrada nesta turma');
+    }
+
+    ensureResourceOwnership(user, list.class?.professorId ?? '');
+
+    return this.classTaskListRepository.getDashboardData(classId, listId);
   }
 }

@@ -36,6 +36,24 @@ export class ClassTaskListController {
     return this.classTaskListService.create(body, user);
   }
 
+  @Get('dashboard')
+  @Roles(Role.PROFESSOR, Role.ADMIN)
+  @ApiOperation({
+    summary: 'Dashboard de envios de uma lista',
+    description:
+      'Retorna a matriz aluno x tarefa (status de cada envio), pontuação ' +
+      'ponderada pelo peso de cada tarefa, e KPIs (nota média, taxa de ' +
+      'conclusão, alunos sem envio e tarefa mais difícil). Considera apenas ' +
+      'submissions feitas diretamente no contexto da lista (classTaskListId).',
+  })
+  getDashboardData(
+    @CurrentUser() user: AuthUser,
+    @Query('classId', ParseUUIDPipe) classId: string,
+    @Query('listId', ParseUUIDPipe) listId: string,
+  ) {
+    return this.classTaskListService.getDashboardData(user, classId, listId);
+  }
+
   @Get('task/:listId')
   @Roles(Role.STUDENT, Role.PROFESSOR, Role.ADMIN)
   @ApiOperation({ summary: 'Lista tarefas pertencentes a uma lista' })
