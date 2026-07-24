@@ -1,6 +1,8 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -58,23 +60,26 @@ export class AuthService {
   }
 
   /**
-   * Mensagem genérica "Credenciais inválidas" para ambos os casos
-   * (usuário inexistente e senha errada) para não facilitar enumeração
-   * de emails válidos.
+   * Faz o login de um usuário e retorna um JWT válido.
+   * Se o usuário não existir, retorna um erro 404.
+   * Se a senha estiver incorreta, retorna um erro 401.
+   * Se a conta estiver desativada, retorna um erro 403.
    */
   async login(data: LoginDto): Promise<AuthResponse> {
     const user = await this.userRepository.findByEmail(data.email);
+
     if (!user) {
-      throw new UnauthorizedException('Credenciais inválidas');
+      throw new NotFoundException('Usuário não encontrado');
     }
 
     const isPasswordValid = await bcrypt.compare(data.password, user.password);
+
     if (!isPasswordValid) {
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
     if (user.desativado) {
-      throw new UnauthorizedException('Conta desativada');
+      throw new ForbiddenException('Conta desativada');
     }
 
     return this.buildAuthResponse(user);
