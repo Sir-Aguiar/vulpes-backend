@@ -45,9 +45,7 @@ export class SubmissionController {
   @Get('class-task/:classTaskId')
   @Roles(Role.PROFESSOR, Role.ADMIN)
   @ApiOperation({ summary: 'Lista submissões de uma tarefa na turma' })
-  getByClassTaskId(
-    @Param('classTaskId', ParseUUIDPipe) classTaskId: string,
-  ) {
+  getByClassTaskId(@Param('classTaskId', ParseUUIDPipe) classTaskId: string) {
     return this.submissionService.getByClassTaskId(classTaskId);
   }
 

@@ -56,6 +56,7 @@ export class PrismaListRepository implements ListRepository {
 
   getByIdAndTaskId(
     listId: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _taskId: string,
   ): Promise<ListWithRelations | null> {
     return this.prisma.list.findUnique({

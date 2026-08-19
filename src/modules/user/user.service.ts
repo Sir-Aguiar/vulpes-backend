@@ -143,9 +143,7 @@ export class UserService {
     currentUser: AuthUser,
   ): Promise<void> {
     if (data.desativado && targetUserId === currentUser.userId) {
-      throw new ForbiddenException(
-        'Você não pode desativar a própria conta',
-      );
+      throw new ForbiddenException('Você não pode desativar a própria conta');
     }
 
     const user = await this.userRepository.findById(targetUserId);

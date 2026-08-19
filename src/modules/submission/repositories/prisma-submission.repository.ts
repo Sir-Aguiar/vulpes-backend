@@ -133,12 +133,12 @@ export class PrismaSubmissionRepository implements SubmissionRepository {
       : FULL_INCLUDE;
 
     try {
-      return await this.prisma.submission.findMany({
+      return (await this.prisma.submission.findMany({
         where: { studentId, professorComments: { not: null } },
         include,
         orderBy: { updatedAt: 'desc' },
         take: isWidget ? 5 : undefined,
-      }) as unknown as SubmissionWithRelations[];
+      })) as unknown as SubmissionWithRelations[];
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new ApplicationError(400, 'Erro ao buscar feedbacks', error);
