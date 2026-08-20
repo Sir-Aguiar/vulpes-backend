@@ -1,7 +1,14 @@
-import { Module } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { AppController } from './app.controller';
+import { CryptoModule } from './common/crypto/crypto.module';
+import { EncryptedBodyMiddleware } from './common/crypto/encrypted-body.middleware';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { ConfigModule } from './config/config.module';
@@ -25,6 +32,7 @@ import { UserModule } from './modules/user/user.module';
 @Module({
   imports: [
     ConfigModule,
+    CryptoModule,
     PrismaModule,
     StorageModule,
     UserModule,
@@ -58,4 +66,16 @@ import { UserModule } from './modules/user/user.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer
+      .apply(EncryptedBodyMiddleware)
+      .forRoutes(
+        { path: 'auth/login', method: RequestMethod.POST },
+        { path: 'auth/signup', method: RequestMethod.POST },
+        { path: 'reset-password', method: RequestMethod.POST },
+        { path: 'reset-password/confirm', method: RequestMethod.POST },
+        { path: 'user/change-password', method: RequestMethod.PATCH },
+      );
+  }
+}

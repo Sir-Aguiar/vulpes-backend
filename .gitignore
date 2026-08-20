@@ -35,6 +35,9 @@ lerna-debug.log*
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# RSA key material (never commit private keys)
+*.pem
+
 # dotenv environment variable files
 .env
 .env.development.local
