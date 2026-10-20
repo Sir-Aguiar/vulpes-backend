@@ -60,12 +60,18 @@ export class SubmissionController {
 
   @Put('feedback/:id')
   @Roles(Role.PROFESSOR, Role.ADMIN)
-  @ApiOperation({ summary: 'Envia feedback do professor para uma submissão' })
+  @ApiOperation({
+    summary: 'Envia feedback do professor para uma submissão',
+    description:
+      'Professor só envia feedback se for o dono da turma da submissão ' +
+      '(via tarefa da turma ou tarefa da lista). ADMIN não tem essa restrição.',
+  })
   sendFeedback(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: SendFeedbackDto,
+    @CurrentUser() user: AuthUser,
   ) {
-    return this.submissionService.sendFeedback(id, body);
+    return this.submissionService.sendFeedback(id, body, user);
   }
 
   @Get('feedbacks')

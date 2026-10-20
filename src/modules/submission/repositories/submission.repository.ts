@@ -32,8 +32,15 @@ export interface SubmissionWithRelations extends Submission {
   };
 }
 
+export interface SubmissionFeedbackContext {
+  professorId: string | null;
+}
+
 export abstract class SubmissionRepository {
   abstract create(data: CreateSubmissionData): Promise<Submission>;
+  abstract getFeedbackContext(
+    submissionId: string,
+  ): Promise<SubmissionFeedbackContext | null>;
   abstract getByTaskId(taskId: string): Promise<SubmissionWithRelations[]>;
   abstract getByClassTaskId(
     classTaskId: string,

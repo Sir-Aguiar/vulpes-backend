@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ensureClassWriteAccess } from '../../common/authorization/authorization.helpers';
 import { AuthUser } from '../../common/types/auth-user.type';
 import { ClassTaskListRepository } from '../class-task-list/repositories/class-task-list.repository';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
@@ -66,7 +67,24 @@ export class SubmissionService {
     return this.submissionRepository.getByClassTaskListId(classTaskListId);
   }
 
-  sendFeedback(submissionId: string, { professorComments }: SendFeedbackDto) {
+  async sendFeedback(
+    submissionId: string,
+    { professorComments }: SendFeedbackDto,
+    user: AuthUser,
+  ) {
+    const context =
+      await this.submissionRepository.getFeedbackContext(submissionId);
+
+    if (!context) {
+      throw new NotFoundException('Submissão não encontrada');
+    }
+
+    ensureClassWriteAccess(
+      user,
+      context.professorId ?? '',
+      'Você não tem permissão para enviar feedback nesta turma',
+    );
+
     return this.submissionRepository.update(submissionId, {
       professorComments,
     });

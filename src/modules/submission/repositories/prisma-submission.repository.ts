@@ -4,6 +4,7 @@ import { ApplicationError } from '../../../common/errors/application.error';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import {
   CreateSubmissionData,
+  SubmissionFeedbackContext,
   SubmissionRepository,
   SubmissionWithRelations,
 } from './submission.repository';
@@ -110,6 +111,34 @@ export class PrismaSubmissionRepository implements SubmissionRepository {
     return this.prisma.submission.count({
       where: { studentId, classTaskListId },
     });
+  }
+
+  async getFeedbackContext(
+    submissionId: string,
+  ): Promise<SubmissionFeedbackContext | null> {
+    // Busca o professorId da tarefa ou da lista de tarefas
+    const submission = await this.prisma.submission.findUnique({
+      where: { submissionId },
+      select: {
+        classTask: {
+          select: { class: { select: { professorId: true } } },
+        },
+        classTaskList: {
+          select: {
+            list: { select: { class: { select: { professorId: true } } } },
+          },
+        },
+      },
+    });
+
+    if (!submission) return null;
+
+    const professorId =
+      submission.classTaskList?.list.class.professorId ??
+      submission.classTask?.class.professorId ??
+      null;
+
+    return { professorId };
   }
 
   async getFeedbacks(
