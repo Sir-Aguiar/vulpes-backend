@@ -14,6 +14,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import type { AuthUser } from '../../common/types/auth-user.type';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
+import { GetFeedbacksQueryDto } from './dto/get-feedbacks.dto';
 import { SendFeedbackDto } from './dto/send-feedback.dto';
 import { SubmissionService } from './submission.service';
 
@@ -76,11 +77,16 @@ export class SubmissionController {
 
   @Get('feedbacks')
   @Roles(Role.STUDENT, Role.PROFESSOR, Role.ADMIN)
-  @ApiOperation({ summary: 'Lista feedbacks de um aluno' })
+  @ApiOperation({
+    summary: 'Lista feedbacks de um aluno',
+    description:
+      '`isWidget=true` devolve no máximo 5 feedbacks recentes. ' +
+      '`isWidget=false` ou a ausência do parâmetro devolve a lista completa.',
+  })
   getFeedbacks(
     @CurrentUser() user: AuthUser,
-    @Query('isWidget') isWidget?: boolean,
+    @Query() query: GetFeedbacksQueryDto,
   ) {
-    return this.submissionService.getFeedbacks(user, isWidget ?? false);
+    return this.submissionService.getFeedbacks(user, query.isWidget);
   }
 }
