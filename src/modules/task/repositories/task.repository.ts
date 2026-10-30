@@ -1,3 +1,4 @@
+import { AuditActor } from '../../audit/audit.types';
 import { CreateTaskDto } from '../dto/create-task.dto';
 import { LinkableTask } from '../dto/get-linkable-tasks.dto';
 import {
@@ -10,6 +11,15 @@ import { TaskWithRelations } from '../entities/task.entity';
 
 export interface CreateTaskData extends CreateTaskDto {
   creatorId: string;
+}
+
+export interface TaskAuditContext {
+  actor: AuditActor;
+  before: {
+    isVisible: boolean;
+    isPublic: boolean;
+    deletedAt: Date | null;
+  };
 }
 
 export interface LinkableTasksOptions {
@@ -29,8 +39,13 @@ export abstract class TaskRepository {
   abstract update(
     taskId: string,
     data: UpdateTaskDto,
+    audit?: TaskAuditContext,
   ): Promise<TaskWithRelations>;
-  abstract delete(taskId: string, soft?: boolean): Promise<void>;
+  abstract delete(
+    taskId: string,
+    soft?: boolean,
+    audit?: TaskAuditContext,
+  ): Promise<void>;
   abstract getByCreatorId(creatorId: string): Promise<TaskWithRelations[]>;
   abstract getSubmissionCount(taskId: string): Promise<number>;
   abstract getTasksLinkableToClass(

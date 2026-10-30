@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, StudentClassPermissionRequest } from '@prisma/client';
 import { ApplicationError } from '../../../common/errors/application.error';
+import { dbOf } from '../../../infra/prisma/db';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { GetStudentClassPermissionRequestsQueryDto } from '../dto/get-student-class-permission-requests.dto';
 import {
@@ -98,9 +99,13 @@ export class PrismaStudentClassPermissionRequestRepository implements StudentCla
     });
   }
 
-  async delete(classId: string, studentId: string): Promise<void> {
+  async delete(
+    classId: string,
+    studentId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     try {
-      await this.prisma.studentClassPermissionRequest.delete({
+      await dbOf(this.prisma, tx).studentClassPermissionRequest.delete({
         where: { classId_studentId: { classId, studentId } },
       });
     } catch (error) {

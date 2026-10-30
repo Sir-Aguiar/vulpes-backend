@@ -13,6 +13,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { ConfigModule } from './config/config.module';
 import { PrismaModule } from './infra/prisma/prisma.module';
+import { AuditModule } from './modules/audit/audit.module';
 import { StorageModule } from './infra/storage/storage.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BugReportModule } from './modules/bug-report/bug-report.module';
@@ -34,6 +35,7 @@ import { UserModule } from './modules/user/user.module';
     ConfigModule,
     CryptoModule,
     PrismaModule,
+    AuditModule,
     StorageModule,
     UserModule,
     AuthModule,

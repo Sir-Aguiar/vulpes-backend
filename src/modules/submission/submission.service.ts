@@ -5,6 +5,9 @@ import {
 } from '@nestjs/common';
 import { ensureClassWriteAccess } from '../../common/authorization/authorization.helpers';
 import { AuthUser } from '../../common/types/auth-user.type';
+import { changedFields } from '../audit/audit-diff';
+import { AuditAction } from '../audit/audit.types';
+import { AuditService } from '../audit/audit.service';
 import { ClassTaskListRepository } from '../class-task-list/repositories/class-task-list.repository';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
 import { SendFeedbackDto } from './dto/send-feedback.dto';
@@ -15,6 +18,7 @@ export class SubmissionService {
   constructor(
     private readonly submissionRepository: SubmissionRepository,
     private readonly classTaskListRepository: ClassTaskListRepository,
+    private readonly audit: AuditService,
   ) {}
 
   async create(data: CreateSubmissionDto, user: AuthUser) {
@@ -85,8 +89,31 @@ export class SubmissionService {
       'Você não tem permissão para enviar feedback nesta turma',
     );
 
-    return this.submissionRepository.update(submissionId, {
-      professorComments,
+    return this.audit.transaction(async (tx) => {
+      const updated = await this.submissionRepository.update(
+        submissionId,
+        { professorComments },
+        tx,
+      );
+
+      const diff = changedFields(
+        { professorComments: context.professorComments },
+        { professorComments },
+      );
+      if (diff) {
+        await this.audit.record(
+          {
+            actor: user,
+            action: AuditAction.submissionFeedbackUpdated,
+            entityType: 'Submission',
+            entityId: submissionId,
+            diff,
+          },
+          tx,
+        );
+      }
+
+      return updated;
     });
   }
 

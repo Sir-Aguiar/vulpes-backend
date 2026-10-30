@@ -9,6 +9,12 @@ import {
   isClassOwner,
 } from '../../common/authorization/authorization.helpers';
 import { AuthUser } from '../../common/types/auth-user.type';
+import {
+  AuditAction,
+  classStudentEntityId,
+  membershipDiff,
+} from '../audit/audit.types';
+import { AuditService } from '../audit/audit.service';
 import { ClassRepository } from '../class/repositories/class.repository';
 import { CreateClassStudentDto } from './dto/create-class-student.dto';
 import { GetClassStudentsQueryDto } from './dto/get-class-students.dto';
@@ -19,6 +25,7 @@ export class ClassStudentService {
   constructor(
     private readonly classStudentRepository: ClassStudentRepository,
     private readonly classRepository: ClassRepository,
+    private readonly audit: AuditService,
   ) {}
 
   /**
@@ -35,7 +42,20 @@ export class ClassStudentService {
       'Você não tem permissão para adicionar estudantes a esta turma',
     );
 
-    return this.classStudentRepository.create(data);
+    return this.audit.transaction(async (tx) => {
+      const created = await this.classStudentRepository.create(data, tx);
+      await this.audit.record(
+        {
+          actor: user,
+          action: AuditAction.classStudentAdded,
+          entityType: 'ClassStudent',
+          entityId: classStudentEntityId(data.classId, data.studentId),
+          diff: membershipDiff(data.classId, data.studentId, 'added'),
+        },
+        tx,
+      );
+      return created;
+    });
   }
 
   /**
@@ -87,7 +107,19 @@ export class ClassStudentService {
       );
     }
 
-    await this.classStudentRepository.delete(classId, studentId);
+    await this.audit.transaction(async (tx) => {
+      await this.classStudentRepository.delete(classId, studentId, tx);
+      await this.audit.record(
+        {
+          actor: user,
+          action: AuditAction.classStudentRemoved,
+          entityType: 'ClassStudent',
+          entityId: classStudentEntityId(classId, studentId),
+          diff: membershipDiff(classId, studentId, 'removed'),
+        },
+        tx,
+      );
+    });
     return { message: 'Estudante removido da turma com sucesso' };
   }
 
