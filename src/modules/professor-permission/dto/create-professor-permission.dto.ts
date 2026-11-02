@@ -15,6 +15,7 @@ export type CreateProfessorPermissionDto = z.infer<
 
 export const respondProfessorPermissionSchema = z.object({
   requestStatus: z.enum(['APPROVED', 'REJECTED']),
+  notify: z.boolean().default(false),
 });
 
 export class RespondProfessorPermissionDto extends createZodDto(

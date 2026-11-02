@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { EmailerModule } from '../../infra/emailer/emailer.module';
 import { StorageModule } from '../../infra/storage/storage.module';
 import { UserModule } from '../user/user.module';
 import { ProfessorPermissionController } from './professor-permission.controller';
@@ -7,7 +8,7 @@ import { PrismaProfessorPermissionRepository } from './repositories/prisma-profe
 import { ProfessorPermissionRepository } from './repositories/professor-permission.repository';
 
 @Module({
-  imports: [StorageModule, UserModule],
+  imports: [StorageModule, UserModule, EmailerModule],
   controllers: [ProfessorPermissionController],
   providers: [
     ProfessorPermissionService,

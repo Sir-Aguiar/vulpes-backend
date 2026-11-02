@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { ProfessorPermissionRequest, Role } from '@prisma/client';
+import { renderFile } from 'ejs';
+import { resolve } from 'path';
 import { AuthUser } from '../../common/types/auth-user.type';
+import { EmailerService } from '../../infra/emailer/emailer.service';
 import { changedFields } from '../audit/audit-diff';
 import { AuditAction } from '../audit/audit.types';
 import { AuditService } from '../audit/audit.service';
@@ -17,6 +20,7 @@ export class ProfessorPermissionService {
     private readonly repository: ProfessorPermissionRepository,
     private readonly userRepository: UserRepository,
     private readonly audit: AuditService,
+    private readonly emailerService: EmailerService,
   ) {}
 
   create(data: CreateProfessorPermissionDto) {
@@ -41,16 +45,19 @@ export class ProfessorPermissionService {
    * `PROFESSOR`. Se o usuário ainda não existe (cadastro futuro), a
    * aprovação fica registrada mas ninguém é promovido — o vínculo teria
    * que ser refeito manualmente. (Comportamento atual; pode ser revisitado.)
+   *
+   * Com `notify`, após a decisão busca o usuário pelo `personalEmail` e
+   * envia o template `professor-permission-answer.ejs` para o email dele.
    */
   async respond(
     id: number,
-    { requestStatus }: RespondProfessorPermissionDto,
+    { requestStatus, notify }: RespondProfessorPermissionDto,
     actor: AuthUser,
   ) {
     const current = await this.repository.getById(id);
     if (!current) throw new NotFoundException('Solicitação não encontrada');
 
-    return this.audit.transaction(async (tx) => {
+    const request = await this.audit.transaction(async (tx) => {
       const request = await this.repository.update(id, { requestStatus }, tx);
 
       const statusDiff = changedFields(
@@ -94,6 +101,40 @@ export class ProfessorPermissionService {
       }
 
       return request;
+    });
+
+    if (notify) {
+      await this.sendDecisionEmail(request);
+    }
+
+    return request;
+  }
+
+  private async sendDecisionEmail(
+    request: ProfessorPermissionRequest,
+  ): Promise<void> {
+    const user = await this.userRepository.findByEmail(request.personalEmail);
+    if (!user) {
+      throw new NotFoundException('Usuário da solicitação não encontrado');
+    }
+
+    const html = await renderFile(
+      resolve('src', 'templates', 'professor-permission-answer.ejs'),
+      {
+        name: request.name,
+        requestStatus: request.requestStatus,
+      },
+    );
+
+    const subject =
+      request.requestStatus === 'APPROVED'
+        ? 'Sua solicitação para professor foi aprovada'
+        : 'Sua solicitação para professor foi recusada';
+
+    await this.emailerService.sendEmail({
+      to: user.email,
+      subject,
+      html,
     });
   }
 }

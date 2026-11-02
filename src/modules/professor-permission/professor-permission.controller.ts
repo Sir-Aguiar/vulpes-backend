@@ -114,7 +114,8 @@ export class ProfessorPermissionController {
     summary: 'Aprova ou rejeita uma solicitação (ADMIN)',
     description:
       'Ao aprovar (APPROVED), se existe um usuário com o `personalEmail` ' +
-      'informado, ele é promovido a role PROFESSOR.',
+      'informado, ele é promovido a role PROFESSOR. ' +
+      'Com `notify: true`, envia um email ao usuário que fez a solicitação.',
   })
   respond(
     @Param('id', ParseIntPipe) id: number,
