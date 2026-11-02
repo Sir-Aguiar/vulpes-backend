@@ -1,4 +1,4 @@
-import { ProfessorPermissionRequest } from '@prisma/client';
+import { Prisma, ProfessorPermissionRequest } from '@prisma/client';
 import { CreateProfessorPermissionDto } from '../dto/create-professor-permission.dto';
 
 export abstract class ProfessorPermissionRepository {
@@ -10,5 +10,6 @@ export abstract class ProfessorPermissionRepository {
   abstract update(
     id: number,
     data: Partial<ProfessorPermissionRequest>,
+    tx?: Prisma.TransactionClient,
   ): Promise<ProfessorPermissionRequest>;
 }

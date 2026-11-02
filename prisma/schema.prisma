@@ -257,3 +257,21 @@ model BugReport {
   userId String
   user   User   @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
+
+// Trilha de negócio. Sem FK: o evento permanece se o usuário for removido.
+// diff guarda só colunas de negócio alteradas, no formato { before, after }.
+// Não gravar password nem Submission.code.
+model AuditEvent {
+  auditEventId String   @id @default(uuid())
+  actorId      String?
+  actorRole    Role?
+  action       String   @db.VarChar(64)
+  entityType   String   @db.VarChar(64)
+  entityId     String   @db.VarChar(128)
+  diff         Json?
+  createdAt    DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt(sort: Desc)])
+  @@index([actorId, createdAt(sort: Desc)])
+  @@index([createdAt])
+}

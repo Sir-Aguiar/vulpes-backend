@@ -1,4 +1,4 @@
-import { ClassStudent } from '@prisma/client';
+import { ClassStudent, Prisma } from '@prisma/client';
 import { CreateClassStudentDto } from '../dto/create-class-student.dto';
 import { GetClassStudentsQueryDto } from '../dto/get-class-students.dto';
 
@@ -16,7 +16,10 @@ export interface ClassStudentWithRelations extends ClassStudent {
 }
 
 export abstract class ClassStudentRepository {
-  abstract create(data: CreateClassStudentDto): Promise<ClassStudent>;
+  abstract create(
+    data: CreateClassStudentDto,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ClassStudent>;
   abstract getByIds(
     classId: string,
     studentId: string,
@@ -25,7 +28,11 @@ export abstract class ClassStudentRepository {
     classId: string,
     query: GetClassStudentsQueryDto,
   ): Promise<{ students: ClassStudentWithRelations[]; total: number }>;
-  abstract delete(classId: string, studentId: string): Promise<void>;
+  abstract delete(
+    classId: string,
+    studentId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void>;
   abstract isStudentInClass(
     classId: string,
     studentId: string,

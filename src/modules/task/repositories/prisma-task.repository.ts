@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { ApplicationError } from '../../../common/errors/application.error';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
+import { changedFields } from '../../audit/audit-diff';
+import { AuditAction } from '../../audit/audit.types';
+import { AuditService } from '../../audit/audit.service';
 import { LinkableTask } from '../dto/get-linkable-tasks.dto';
 import {
   GetPublishedTasksQueryDto,
@@ -13,6 +16,7 @@ import { TaskWithRelations } from '../entities/task.entity';
 import {
   CreateTaskData,
   LinkableTasksOptions,
+  TaskAuditContext,
   TaskRepository,
 } from './task.repository';
 
@@ -46,7 +50,10 @@ const TASK_INCLUDE = {
 
 @Injectable()
 export class PrismaTaskRepository implements TaskRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   async create(data: CreateTaskData): Promise<TaskWithRelations> {
     const { taskParams, testCases, classIds: _classIds, ...rest } = data;
@@ -138,12 +145,41 @@ export class PrismaTaskRepository implements TaskRepository {
     return { tasks, total };
   }
 
-  update(taskId: string, data: UpdateTaskDto): Promise<TaskWithRelations> {
+  update(
+    taskId: string,
+    data: UpdateTaskDto,
+    audit?: TaskAuditContext,
+  ): Promise<TaskWithRelations> {
     const { taskParams, taskTests, classIds: _classIds, ...taskData } = data;
     void _classIds;
 
     return this.prisma.$transaction(async (tx) => {
       await tx.task.update({ where: { taskId }, data: taskData });
+
+      if (audit) {
+        const diff = changedFields(
+          {
+            isVisible: audit.before.isVisible,
+            isPublic: audit.before.isPublic,
+          },
+          {
+            isVisible: taskData.isVisible ?? audit.before.isVisible,
+            isPublic: taskData.isPublic ?? audit.before.isPublic,
+          },
+        );
+        if (diff) {
+          await this.audit.record(
+            {
+              actor: audit.actor,
+              action: AuditAction.taskVisibilityChanged,
+              entityType: 'Task',
+              entityId: taskId,
+              diff,
+            },
+            tx,
+          );
+        }
+      }
 
       if (taskParams) {
         await tx.taskParam.deleteMany({ where: { taskId } });
@@ -176,15 +212,60 @@ export class PrismaTaskRepository implements TaskRepository {
     });
   }
 
-  async delete(taskId: string, soft: boolean = false): Promise<void> {
+  async delete(
+    taskId: string,
+    soft: boolean = false,
+    audit?: TaskAuditContext,
+  ): Promise<void> {
     if (soft) {
-      await this.prisma.task.update({
-        where: { taskId },
-        data: { deletedAt: new Date() },
+      const deletedAt = new Date();
+      await this.prisma.$transaction(async (tx) => {
+        await tx.task.update({
+          where: { taskId },
+          data: { deletedAt },
+        });
+        if (!audit) return;
+        const diff = changedFields(
+          { deletedAt: audit.before.deletedAt },
+          { deletedAt },
+        );
+        if (!diff) return;
+        await this.audit.record(
+          {
+            actor: audit.actor,
+            action: AuditAction.taskDeleted,
+            entityType: 'Task',
+            entityId: taskId,
+            diff,
+          },
+          tx,
+        );
       });
       return;
     }
-    await this.prisma.task.delete({ where: { taskId } });
+
+    await this.prisma.$transaction(async (tx) => {
+      if (audit) {
+        await this.audit.record(
+          {
+            actor: audit.actor,
+            action: AuditAction.taskDeleted,
+            entityType: 'Task',
+            entityId: taskId,
+            diff: {
+              before: {
+                isVisible: audit.before.isVisible,
+                isPublic: audit.before.isPublic,
+                deletedAt: audit.before.deletedAt?.toISOString() ?? null,
+              },
+              after: { removed: true },
+            },
+          },
+          tx,
+        );
+      }
+      await tx.task.delete({ where: { taskId } });
+    });
   }
 
   getByCreatorId(creatorId: string): Promise<TaskWithRelations[]> {

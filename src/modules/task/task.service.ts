@@ -97,7 +97,14 @@ export class TaskService {
 
     const { classIds: _classIds, ...taskData } = data;
     void _classIds;
-    return this.taskRepository.update(taskId, taskData);
+    return this.taskRepository.update(taskId, taskData, {
+      actor: user,
+      before: {
+        isVisible: task.isVisible,
+        isPublic: task.isPublic,
+        deletedAt: task.deletedAt,
+      },
+    });
   }
 
   /**
@@ -122,7 +129,14 @@ export class TaskService {
       await this.taskRepository.getSubmissionCount(taskId);
     const useSoftDelete = submissionCount > 0;
 
-    await this.taskRepository.delete(taskId, useSoftDelete);
+    await this.taskRepository.delete(taskId, useSoftDelete, {
+      actor: user,
+      before: {
+        isVisible: task.isVisible,
+        isPublic: task.isPublic,
+        deletedAt: task.deletedAt,
+      },
+    });
 
     return useSoftDelete
       ? {

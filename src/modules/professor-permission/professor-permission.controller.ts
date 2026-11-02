@@ -22,7 +22,9 @@ import {
 } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import 'multer';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import type { AuthUser } from '../../common/types/auth-user.type';
 import { StorageService } from '../../infra/storage/storage.service';
 import {
   createProfessorPermissionSchema,
@@ -117,7 +119,8 @@ export class ProfessorPermissionController {
   respond(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: RespondProfessorPermissionDto,
+    @CurrentUser() user: AuthUser,
   ) {
-    return this.service.respond(id, body);
+    return this.service.respond(id, body, user);
   }
 }

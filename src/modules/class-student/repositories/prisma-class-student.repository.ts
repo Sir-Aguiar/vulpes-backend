@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ClassStudent, Prisma } from '@prisma/client';
 import { ApplicationError } from '../../../common/errors/application.error';
+import { dbOf } from '../../../infra/prisma/db';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { CreateClassStudentDto } from '../dto/create-class-student.dto';
 import { GetClassStudentsQueryDto } from '../dto/get-class-students.dto';
@@ -19,9 +20,12 @@ const STUDENT_SELECT = {
 export class PrismaClassStudentRepository implements ClassStudentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: CreateClassStudentDto): Promise<ClassStudent> {
+  async create(
+    data: CreateClassStudentDto,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ClassStudent> {
     try {
-      return await this.prisma.classStudent.create({
+      return await dbOf(this.prisma, tx).classStudent.create({
         data: { classId: data.classId, studentId: data.studentId },
       });
     } catch (error) {
@@ -73,9 +77,13 @@ export class PrismaClassStudentRepository implements ClassStudentRepository {
     return { students, total };
   }
 
-  async delete(classId: string, studentId: string): Promise<void> {
+  async delete(
+    classId: string,
+    studentId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     try {
-      await this.prisma.classStudent.delete({
+      await dbOf(this.prisma, tx).classStudent.delete({
         where: { classId_studentId: { classId, studentId } },
       });
     } catch (error) {

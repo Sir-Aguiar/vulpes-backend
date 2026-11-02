@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, ProfessorPermissionRequest } from '@prisma/client';
 import { ApplicationError } from '../../../common/errors/application.error';
+import { dbOf } from '../../../infra/prisma/db';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { CreateProfessorPermissionDto } from '../dto/create-professor-permission.dto';
 import { ProfessorPermissionRepository } from './professor-permission.repository';
@@ -43,9 +44,10 @@ export class PrismaProfessorPermissionRepository implements ProfessorPermissionR
   async update(
     id: number,
     data: Partial<ProfessorPermissionRequest>,
+    tx?: Prisma.TransactionClient,
   ): Promise<ProfessorPermissionRequest> {
     try {
-      return await this.prisma.professorPermissionRequest.update({
+      return await dbOf(this.prisma, tx).professorPermissionRequest.update({
         where: { professorPermissionRequestId: id },
         data,
       });

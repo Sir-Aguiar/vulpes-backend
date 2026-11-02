@@ -12,6 +12,9 @@ import { renderFile } from 'ejs';
 import { resolve } from 'path';
 import { AuthUser } from '../../common/types/auth-user.type';
 import { EnvService } from '../../config/env.service';
+import { changedFields } from '../audit/audit-diff';
+import { AuditAction } from '../audit/audit.types';
+import { AuditService } from '../audit/audit.service';
 import { EmailerService } from '../../infra/emailer/emailer.service';
 import { GetUsersQueryDto, UserListItem } from './dto/get-users.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
@@ -31,6 +34,7 @@ export class UserService {
     private readonly emailerService: EmailerService,
     private readonly jwtService: JwtService,
     private readonly envService: EnvService,
+    private readonly audit: AuditService,
   ) {}
 
   /**
@@ -104,7 +108,21 @@ export class UserService {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    await this.userRepository.updateEmail(userId, newEmail);
+    await this.audit.transaction(async (tx) => {
+      await this.userRepository.updateEmail(userId, newEmail, tx);
+      const diff = changedFields({ email: user.email }, { email: newEmail });
+      if (!diff) return;
+      await this.audit.record(
+        {
+          actor: { userId: user.userId, role: user.role },
+          action: AuditAction.userEmailChanged,
+          entityType: 'User',
+          entityId: user.userId,
+          diff,
+        },
+        tx,
+      );
+    });
 
     const resolvedPath = resolve('src', 'templates', 'email-verified.ejs');
     return renderFile(resolvedPath, { email: newEmail });
@@ -151,7 +169,28 @@ export class UserService {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    await this.userRepository.setDesativado(targetUserId, data.desativado);
+    await this.audit.transaction(async (tx) => {
+      await this.userRepository.setDesativado(
+        targetUserId,
+        data.desativado,
+        tx,
+      );
+      const diff = changedFields(
+        { desativado: user.desativado },
+        { desativado: data.desativado },
+      );
+      if (!diff) return;
+      await this.audit.record(
+        {
+          actor: currentUser,
+          action: AuditAction.userStatusChanged,
+          entityType: 'User',
+          entityId: targetUserId,
+          diff,
+        },
+        tx,
+      );
+    });
   }
 
   async deactivateUser({ userId }: AuthUser): Promise<void> {
@@ -162,7 +201,24 @@ export class UserService {
     }
 
     try {
-      await this.userRepository.deactivate(userId);
+      await this.audit.transaction(async (tx) => {
+        await this.userRepository.setDesativado(userId, true, tx);
+        const diff = changedFields(
+          { desativado: user.desativado },
+          { desativado: true },
+        );
+        if (!diff) return;
+        await this.audit.record(
+          {
+            actor: { userId: user.userId, role: user.role },
+            action: AuditAction.userStatusChanged,
+            entityType: 'User',
+            entityId: user.userId,
+            diff,
+          },
+          tx,
+        );
+      });
     } catch {
       throw new InternalServerErrorException('Falha ao desativar usuário');
     }

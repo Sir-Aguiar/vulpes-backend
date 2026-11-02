@@ -1,4 +1,4 @@
-import { StudentClassPermissionRequest } from '@prisma/client';
+import { Prisma, StudentClassPermissionRequest } from '@prisma/client';
 import { CreateStudentClassPermissionRequestDto } from '../dto/create-student-class-permission-request.dto';
 import { GetStudentClassPermissionRequestsQueryDto } from '../dto/get-student-class-permission-requests.dto';
 
@@ -41,5 +41,9 @@ export abstract class StudentClassPermissionRequestRepository {
   abstract getByStudentId(
     studentId: string,
   ): Promise<StudentClassPermissionRequestWithRelations[]>;
-  abstract delete(classId: string, studentId: string): Promise<void>;
+  abstract delete(
+    classId: string,
+    studentId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void>;
 }

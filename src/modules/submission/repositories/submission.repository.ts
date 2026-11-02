@@ -1,4 +1,4 @@
-import { ClassTask, ClassTaskList, Submission } from '@prisma/client';
+import { ClassTask, ClassTaskList, Prisma, Submission } from '@prisma/client';
 import { CreateSubmissionDto } from '../dto/create-submission.dto';
 
 export interface CreateSubmissionData extends CreateSubmissionDto {
@@ -34,6 +34,7 @@ export interface SubmissionWithRelations extends Submission {
 
 export interface SubmissionFeedbackContext {
   professorId: string | null;
+  professorComments: string | null;
 }
 
 export abstract class SubmissionRepository {
@@ -59,5 +60,6 @@ export abstract class SubmissionRepository {
   abstract update(
     submissionId: string,
     data: Partial<Submission>,
+    tx?: Prisma.TransactionClient,
   ): Promise<Submission>;
 }

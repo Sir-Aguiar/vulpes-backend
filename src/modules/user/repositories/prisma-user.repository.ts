@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, Role, User } from '@prisma/client';
+import { dbOf } from '../../../infra/prisma/db';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { GetUsersQueryDto, UserListItem } from '../dto/get-users.dto';
@@ -22,8 +23,11 @@ export class PrismaUserRepository implements UserRepository {
     return this.prisma.user.create({ data });
   }
 
-  findByEmail(email: string): Promise<User | null> {
-    return this.prisma.user.findUnique({ where: { email } });
+  findByEmail(
+    email: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<User | null> {
+    return dbOf(this.prisma, tx).user.findUnique({ where: { email } });
   }
 
   findById(userId: string): Promise<User | null> {
@@ -59,8 +63,12 @@ export class PrismaUserRepository implements UserRepository {
     return { users, total };
   }
 
-  updateRole(userId: string, role: Role): Promise<User> {
-    return this.prisma.user.update({
+  updateRole(
+    userId: string,
+    role: Role,
+    tx?: Prisma.TransactionClient,
+  ): Promise<User> {
+    return dbOf(this.prisma, tx).user.update({
       where: { userId },
       data: { role },
     });
@@ -73,8 +81,12 @@ export class PrismaUserRepository implements UserRepository {
     });
   }
 
-  updateEmail(userId: string, email: string): Promise<User> {
-    return this.prisma.user.update({
+  updateEmail(
+    userId: string,
+    email: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<User> {
+    return dbOf(this.prisma, tx).user.update({
       where: { userId },
       data: { email },
     });
@@ -91,8 +103,12 @@ export class PrismaUserRepository implements UserRepository {
     return this.setDesativado(userId, true);
   }
 
-  setDesativado(userId: string, desativado: boolean): Promise<User> {
-    return this.prisma.user.update({
+  setDesativado(
+    userId: string,
+    desativado: boolean,
+    tx?: Prisma.TransactionClient,
+  ): Promise<User> {
+    return dbOf(this.prisma, tx).user.update({
       where: { userId },
       data: { desativado },
     });

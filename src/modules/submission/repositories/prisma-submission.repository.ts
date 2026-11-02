@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, Submission } from '@prisma/client';
 import { ApplicationError } from '../../../common/errors/application.error';
+import { dbOf } from '../../../infra/prisma/db';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import {
   CreateSubmissionData,
@@ -120,6 +121,7 @@ export class PrismaSubmissionRepository implements SubmissionRepository {
     const submission = await this.prisma.submission.findUnique({
       where: { submissionId },
       select: {
+        professorComments: true,
         classTask: {
           select: { class: { select: { professorId: true } } },
         },
@@ -138,7 +140,7 @@ export class PrismaSubmissionRepository implements SubmissionRepository {
       submission.classTask?.class.professorId ??
       null;
 
-    return { professorId };
+    return { professorId, professorComments: submission.professorComments };
   }
 
   async getFeedbacks(
@@ -179,9 +181,10 @@ export class PrismaSubmissionRepository implements SubmissionRepository {
   async update(
     submissionId: string,
     data: Partial<Submission>,
+    tx?: Prisma.TransactionClient,
   ): Promise<Submission> {
     try {
-      return await this.prisma.submission.update({
+      return await dbOf(this.prisma, tx).submission.update({
         where: { submissionId },
         data,
       });

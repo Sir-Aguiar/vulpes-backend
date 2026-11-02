@@ -6,6 +6,12 @@ import {
 } from '@nestjs/common';
 import { ensureClassWriteAccess } from '../../common/authorization/authorization.helpers';
 import { AuthUser } from '../../common/types/auth-user.type';
+import {
+  AuditAction,
+  classStudentEntityId,
+  membershipDiff,
+} from '../audit/audit.types';
+import { AuditService } from '../audit/audit.service';
 import { ClassStudentRepository } from '../class-student/repositories/class-student.repository';
 import { ClassRepository } from '../class/repositories/class.repository';
 import { CreateStudentClassPermissionRequestDto } from './dto/create-student-class-permission-request.dto';
@@ -18,6 +24,7 @@ export class StudentClassPermissionRequestService {
     private readonly repository: StudentClassPermissionRequestRepository,
     private readonly classRepository: ClassRepository,
     private readonly classStudentRepository: ClassStudentRepository,
+    private readonly audit: AuditService,
   ) {}
 
   /**
@@ -82,12 +89,8 @@ export class StudentClassPermissionRequestService {
   }
 
   /**
-   * Aprovação é atômica do ponto de vista do domínio: cria o
-   * `ClassStudent` (matrícula) e remove a solicitação.
-   *
-   * Nota de risco: hoje as duas operações não rodam numa transação;
-   * se a segunda falhar, o estudante fica matriculado com a solicitação
-   * ainda pendente. Ver ADR específico para encaminhamento.
+   * Aprovação cria o `ClassStudent`, apaga a solicitação e registra a
+   * matrícula na mesma transação.
    */
   async approve(classId: string, studentId: string, user: AuthUser) {
     await this.assertManagerAccess(classId, user);
@@ -95,8 +98,20 @@ export class StudentClassPermissionRequestService {
     const request = await this.repository.getByIds(classId, studentId);
     if (!request) throw new NotFoundException('Solicitação não encontrada');
 
-    await this.classStudentRepository.create({ classId, studentId });
-    await this.repository.delete(classId, studentId);
+    await this.audit.transaction(async (tx) => {
+      await this.classStudentRepository.create({ classId, studentId }, tx);
+      await this.repository.delete(classId, studentId, tx);
+      await this.audit.record(
+        {
+          actor: user,
+          action: AuditAction.classStudentAdded,
+          entityType: 'ClassStudent',
+          entityId: classStudentEntityId(classId, studentId),
+          diff: membershipDiff(classId, studentId, 'added'),
+        },
+        tx,
+      );
+    });
 
     return {
       message:
