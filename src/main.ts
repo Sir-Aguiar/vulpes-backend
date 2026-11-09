@@ -69,6 +69,7 @@ async function bootstrap() {
 
   const port = envService.get('PORT');
   await app.listen(port);
+  
   Logger.log(`Application listening on port ${port}`, 'Bootstrap');
   Logger.log(`Swagger UI available at /api`, 'Bootstrap');
 }
