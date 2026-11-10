@@ -20,17 +20,17 @@ export class BugReportService {
       userId: user.userId,
     });
 
-    try {
-      await this.notificationService.notify(report, {
+    void this.notificationService
+      .notify(report, {
         name: user.name,
         email: user.email,
+      })
+      .catch((error: unknown) => {
+        this.logger.error(
+          `Falha inesperada ao notificar o relato #${report.bugReportId}`,
+          error,
+        );
       });
-    } catch (error) {
-      this.logger.error(
-        `Falha inesperada ao notificar o relato #${report.bugReportId}`,
-        error,
-      );
-    }
 
     return report;
   }
