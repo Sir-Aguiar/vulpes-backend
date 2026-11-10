@@ -18,8 +18,12 @@ export const userPreferencesSchema = z
       .min(1, 'O tema do editor não pode ser vazio')
       .max(64, 'O tema do editor deve ter no máximo 64 caracteres')
       .optional(),
+    adminNotifyBugReport: z.boolean().optional(),
   })
-  .strict();
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, {
+    message: 'Informe ao menos uma preferência para atualizar',
+  });
 
 export class UserPreferencesDto extends createZodDto(userPreferencesSchema) {}
 

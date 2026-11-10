@@ -4,6 +4,7 @@ import { dbOf } from '../../../infra/prisma/db';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { GetUsersQueryDto, UserListItem } from '../dto/get-users.dto';
+import { UserPreferences } from '../dto/user-preferences.dto';
 import { ActiveUserByRole, UserRepository } from './user.repository';
 
 const USER_LIST_SELECT = {
@@ -86,6 +87,16 @@ export class PrismaUserRepository implements UserRepository {
     return this.prisma.user.update({
       where: { userId },
       data: { name },
+    });
+  }
+
+  updatePreferences(
+    userId: string,
+    userPreferences: UserPreferences,
+  ): Promise<User> {
+    return this.prisma.user.update({
+      where: { userId },
+      data: { userPreferences },
     });
   }
 
