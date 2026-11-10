@@ -20,6 +20,7 @@ export abstract class UserRepository {
     query: GetUsersQueryDto,
   ): Promise<{ users: UserListItem[]; total: number }>;
   abstract findActiveByRole(role: Role): Promise<ActiveUserByRole[]>;
+  abstract findAdminsToNotifyBugReport(): Promise<ActiveUserByRole[]>;
   abstract updateRole(
     userId: string,
     role: Role,

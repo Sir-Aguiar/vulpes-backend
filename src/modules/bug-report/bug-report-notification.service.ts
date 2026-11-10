@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BugReport, Role } from '@prisma/client';
+import { BugReport } from '@prisma/client';
 import { renderFile } from 'ejs';
 import { resolve } from 'path';
 import { EnvService } from '../../config/env.service';
@@ -27,11 +27,11 @@ export class BugReportNotificationService {
    */
   async notify(report: BugReport, reporter: BugReportReporter): Promise<void> {
     try {
-      const admins = await this.userRepository.findActiveByRole(Role.ADMIN);
+      const admins = await this.userRepository.findAdminsToNotifyBugReport();
 
       if (admins.length === 0) {
         this.logger.warn(
-          `Nenhum administrador ativo para o relato #${report.bugReportId}`,
+          `Nenhum administrador com notificação de relato habilitada para o relato #${report.bugReportId}`,
         );
         return;
       }

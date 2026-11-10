@@ -72,6 +72,21 @@ export class PrismaUserRepository implements UserRepository {
     });
   }
 
+  findAdminsToNotifyBugReport(): Promise<ActiveUserByRole[]> {
+    return this.prisma.user.findMany({
+      where: {
+        role: Role.ADMIN,
+        desativado: false,
+        userPreferences: {
+          path: ['adminNotifyBugReport'],
+          equals: true,
+        },
+      },
+      select: { userId: true, name: true, email: true },
+      orderBy: { name: 'asc' },
+    });
+  }
+
   updateRole(
     userId: string,
     role: Role,
