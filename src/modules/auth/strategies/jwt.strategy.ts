@@ -4,6 +4,8 @@ import { Role } from '@prisma/client';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { EnvService } from '../../../config/env.service';
 import { AuthUser } from '../../../common/types/auth-user.type';
+import { parseStoredUserPreferences } from '../../user/dto/user-preferences.dto';
+import type { UserPreferences } from '../../user/dto/user-preferences.dto';
 import { UserRepository } from '../../user/repositories/user.repository';
 
 export interface JwtPayload {
@@ -11,16 +13,17 @@ export interface JwtPayload {
   email: string;
   name: string;
   role: Role;
+  userPreferences: UserPreferences;
 }
 
 /**
  * Valida o JWT e rematerializa o usuário a partir do banco.
  *
- * Por que buscar no banco em vez de confiar só no payload: a role e os
- * dados podem mudar entre dois tokens (promoção a professor, mudança de
- * instituição). Se confiássemos só no JWT, um estudante recém-promovido
- * continuaria "estudante" até renovar o token. O custo de uma consulta
- * extra por request foi considerado aceitável pelo projeto.
+ * Por que buscar no banco em vez de confiar só no payload: a role, as
+ * preferências e os demais dados podem mudar entre dois tokens. O token
+ * carrega `userPreferences` no login, mas `req.user` usa o JSON atual do
+ * banco. O custo de uma consulta extra por request foi considerado
+ * aceitável pelo projeto.
  *
  * O objeto retornado é anexado a `req.user` — é o que `@CurrentUser()`
  * devolve nos controllers.
@@ -55,6 +58,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       name: user.name,
       role: user.role,
       institutionId: user.institutionId,
+      userPreferences: parseStoredUserPreferences(user.userPreferences),
     };
   }
 }

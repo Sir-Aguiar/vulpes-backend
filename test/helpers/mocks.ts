@@ -6,6 +6,7 @@ export const buildAuthUser = (overrides: Partial<AuthUser> = {}): AuthUser => ({
   email: 'user@example.com',
   name: 'Test User',
   role: Role.PROFESSOR,
+  userPreferences: {},
   ...overrides,
 });
 

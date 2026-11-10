@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 export const colorThemeSchema = z.enum(['light', 'dark']);
 
-export const userPreferencesSchema = z
+export const userPreferencesFieldsSchema = z
   .object({
     theme: colorThemeSchema.optional(),
     editorFontSize: z
@@ -20,11 +20,19 @@ export const userPreferencesSchema = z
       .optional(),
     adminNotifyBugReport: z.boolean().optional(),
   })
-  .strict()
-  .refine((value) => Object.keys(value).length > 0, {
-    message: 'Informe ao menos uma preferência para atualizar',
-  });
+  .strict();
+
+export const userPreferencesSchema = userPreferencesFieldsSchema.refine(
+  (value) => Object.keys(value).length > 0,
+  { message: 'Informe ao menos uma preferência para atualizar' },
+);
 
 export class UserPreferencesDto extends createZodDto(userPreferencesSchema) {}
 
-export type UserPreferences = z.infer<typeof userPreferencesSchema>;
+export type UserPreferences = z.infer<typeof userPreferencesFieldsSchema>;
+
+/** Lê o JSON salvo e descarta qualquer formato que não seja o mapeado. */
+export function parseStoredUserPreferences(value: unknown): UserPreferences {
+  const parsed = userPreferencesFieldsSchema.safeParse(value ?? {});
+  return parsed.success ? parsed.data : {};
+}
