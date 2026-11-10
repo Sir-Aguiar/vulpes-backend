@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #f7f8fa;
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #1f2430;
+    }
+
+    .wrapper {
+      max-width: 520px;
+      margin: 48px auto;
+      padding: 0 16px;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid #eef0f3;
+      border-radius: 16px;
+      padding: 40px 36px;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04),
+        0 8px 24px rgba(16, 24, 40, 0.06);
+    }
+
+    .icon-wrap {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #e8f1fb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .icon-wrap svg {
+      width: 28px;
+      height: 28px;
+      stroke: #3b6ea5;
+    }
+
+    .status {
+      display: inline-block;
+      margin: 0 8px 16px 0;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #e8f1fb;
+      color: #2d557f;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      color: #1f2430;
+    }
+
+    p {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.65;
+      font-weight: 300;
+      color: #6b7280;
+    }
+
+    p strong {
+      font-weight: 500;
+      color: #1f2430;
+    }
+
+    .intro {
+      margin-bottom: 24px;
+    }
+
+    .meta a {
+      color: #3b6ea5;
+      text-decoration: none;
+    }
+
+    .fields {
+      margin: 24px 0;
+      border-top: 1px solid #eef0f3;
+    }
+
+    .field {
+      padding: 14px 0;
+      border-bottom: 1px solid #eef0f3;
+    }
+
+    .label {
+      margin: 0 0 4px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: #9aa1ad;
+    }
+
+    .value {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.65;
+      font-weight: 400;
+      color: #1f2430;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .shots {
+      margin: 8px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .shots li {
+      margin: 0 0 8px;
+    }
+
+    .shots a {
+      color: #3b6ea5;
+      font-size: 14px;
+      line-height: 1.5;
+      word-break: break-all;
+    }
+
+    .btn {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 13px 28px;
+      background: #1f2430;
+      color: #ffffff !important;
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+    }
+
+    .footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 12px;
+      color: #b0b8c4;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+
+<body>
+  <%
+    const optional = locals || {};
+    const expectedBehavior = optional.expectedBehavior;
+    const actualBehavior = optional.actualBehavior;
+    const stepsToReproduce = optional.stepsToReproduce;
+    const os = optional.os;
+    const browser = optional.browser;
+    const screenshots = optional.screenshots;
+    const statusLabels = {
+      OPEN: 'Aberto',
+      IN_PROGRESS: 'Em andamento',
+      RESOLVED: 'Resolvido',
+      CLOSED: 'Fechado',
+    };
+    const severityLabels = {
+      LOW: 'Baixa',
+      MEDIUM: 'Média',
+      HIGH: 'Alta',
+      CRITICAL: 'Crítica',
+    };
+    const statusLabel = statusLabels[status] || status;
+    const severityLabel = severityLabels[severity] || severity;
+    const formattedDate = new Date(createdAt).toLocaleString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const hasText = (value) => typeof value === 'string' && value.trim().length > 0;
+    const shots = Array.isArray(screenshots) ? screenshots.filter(hasText) : [];
+  %>
+  <div class="wrapper">
+    <div class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 9v4"></path>
+          <path d="M12 17h.01"></path>
+          <path d="M10.3 4.8 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.8a2 2 0 0 0-3.4 0z"></path>
+        </svg>
+      </div>
+
+      <p class="status"><%= statusLabel %></p>
+      <p class="status"><%= severityLabel %></p>
+      <h1>Novo relato #<%= bugReportId %></h1>
+      <p class="intro meta">
+        Relatado por <strong><%= reporterName %></strong>
+        (<a href="mailto:<%= reporterEmail %>"><%= reporterEmail %></a>)
+        em <%= formattedDate %>.
+      </p>
+
+      <div class="fields">
+        <div class="field">
+          <p class="label">Caminho</p>
+          <p class="value"><%= path %></p>
+        </div>
+        <div class="field">
+          <p class="label">Descrição</p>
+          <p class="value"><%= description %></p>
+        </div>
+        <% if (hasText(expectedBehavior)) { %>
+        <div class="field">
+          <p class="label">Comportamento esperado</p>
+          <p class="value"><%= expectedBehavior %></p>
+        </div>
+        <% } %>
+        <% if (hasText(actualBehavior)) { %>
+        <div class="field">
+          <p class="label">Comportamento atual</p>
+          <p class="value"><%= actualBehavior %></p>
+        </div>
+        <% } %>
+        <% if (hasText(stepsToReproduce)) { %>
+        <div class="field">
+          <p class="label">Passos para reproduzir</p>
+          <p class="value"><%= stepsToReproduce %></p>
+        </div>
+        <% } %>
+        <% if (hasText(os)) { %>
+        <div class="field">
+          <p class="label">Sistema</p>
+          <p class="value"><%= os %></p>
+        </div>
+        <% } %>
+        <% if (hasText(browser)) { %>
+        <div class="field">
+          <p class="label">Navegador</p>
+          <p class="value"><%= browser %></p>
+        </div>
+        <% } %>
+        <% if (shots.length > 0) { %>
+        <div class="field">
+          <p class="label">Evidências</p>
+          <ul class="shots">
+            <% shots.forEach(function (url) { %>
+            <li><a href="<%= url %>"><%= url %></a></li>
+            <% }) %>
+          </ul>
+        </div>
+        <% } %>
+      </div>
+
+      <a href="<%= reportUrl %>" class="btn">Ver relatos</a>
+    </div>
+
+    <p class="footer">
+      Você recebe este email porque administra a Vulpes.
+    </p>
+  </div>
+</body>
+
+</html>
