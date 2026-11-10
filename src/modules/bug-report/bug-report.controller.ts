@@ -53,7 +53,8 @@ export class BugReportController {
       '`path` e `description` são obrigatórios; demais campos de texto, `os` ' +
       'e screenshots são opcionais. `status` inicia como OPEN e `severity` ' +
       'como LOW. Evidências vão para `bug_evidences` no bucket; no banco ' +
-      'ficam apenas as URLs.',
+      'ficam apenas as URLs. Depois de gravar, os administradores ativos ' +
+      'recebem um email. Falha de envio mantém o relato e a resposta de sucesso.',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({

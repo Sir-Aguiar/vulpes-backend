@@ -1,18 +1,38 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import type { AuthUser } from '../../common/types/auth-user.type';
+import { BugReportNotificationService } from './bug-report-notification.service';
 import { CreateBugReportDto } from './dto/create-bug-report.dto';
 import { UpdateBugReportInput } from './dto/update-bug-report.dto';
 import { BugReportRepository } from './repositories/bug-report.repository';
 
 @Injectable()
 export class BugReportService {
-  constructor(private readonly repository: BugReportRepository) {}
+  private readonly logger = new Logger(BugReportService.name);
 
-  create(data: CreateBugReportDto, user: AuthUser) {
-    return this.repository.create({
+  constructor(
+    private readonly repository: BugReportRepository,
+    private readonly notificationService: BugReportNotificationService,
+  ) {}
+
+  async create(data: CreateBugReportDto, user: AuthUser) {
+    const report = await this.repository.create({
       ...data,
       userId: user.userId,
     });
+
+    try {
+      await this.notificationService.notify(report, {
+        name: user.name,
+        email: user.email,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Falha inesperada ao notificar o relato #${report.bugReportId}`,
+        error,
+      );
+    }
+
+    return report;
   }
 
   async getById(id: number) {
