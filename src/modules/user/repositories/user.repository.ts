@@ -2,6 +2,12 @@ import { Prisma, Role, User } from '@prisma/client';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { GetUsersQueryDto, UserListItem } from '../dto/get-users.dto';
 
+export type ActiveUserByRole = {
+  userId: string;
+  name: string;
+  email: string;
+};
+
 export abstract class UserRepository {
   abstract create(data: CreateUserDto): Promise<User>;
   abstract findByEmail(
@@ -12,6 +18,7 @@ export abstract class UserRepository {
   abstract findMany(
     query: GetUsersQueryDto,
   ): Promise<{ users: UserListItem[]; total: number }>;
+  abstract findActiveByRole(role: Role): Promise<ActiveUserByRole[]>;
   abstract updateRole(
     userId: string,
     role: Role,

@@ -4,7 +4,7 @@ import { dbOf } from '../../../infra/prisma/db';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { GetUsersQueryDto, UserListItem } from '../dto/get-users.dto';
-import { UserRepository } from './user.repository';
+import { ActiveUserByRole, UserRepository } from './user.repository';
 
 const USER_LIST_SELECT = {
   userId: true,
@@ -61,6 +61,14 @@ export class PrismaUserRepository implements UserRepository {
     ]);
 
     return { users, total };
+  }
+
+  findActiveByRole(role: Role): Promise<ActiveUserByRole[]> {
+    return this.prisma.user.findMany({
+      where: { role, desativado: false },
+      select: { userId: true, name: true, email: true },
+      orderBy: { name: 'asc' },
+    });
   }
 
   updateRole(
