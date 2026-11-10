@@ -1,6 +1,7 @@
 import { Prisma, Role, User } from '@prisma/client';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { GetUsersQueryDto, UserListItem } from '../dto/get-users.dto';
+import { UserPreferences } from '../dto/user-preferences.dto';
 
 export type ActiveUserByRole = {
   userId: string;
@@ -19,12 +20,17 @@ export abstract class UserRepository {
     query: GetUsersQueryDto,
   ): Promise<{ users: UserListItem[]; total: number }>;
   abstract findActiveByRole(role: Role): Promise<ActiveUserByRole[]>;
+  abstract findAdminsToNotifyBugReport(): Promise<ActiveUserByRole[]>;
   abstract updateRole(
     userId: string,
     role: Role,
     tx?: Prisma.TransactionClient,
   ): Promise<User>;
   abstract updateName(userId: string, name: string): Promise<User>;
+  abstract updatePreferences(
+    userId: string,
+    userPreferences: UserPreferences,
+  ): Promise<User>;
   abstract updateEmail(
     userId: string,
     email: string,

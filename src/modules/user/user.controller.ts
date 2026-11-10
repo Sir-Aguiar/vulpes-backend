@@ -19,6 +19,10 @@ import { paginate } from '../../common/pagination/pagination.types';
 import type { AuthUser } from '../../common/types/auth-user.type';
 import { GetUsersQueryDto } from './dto/get-users.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
+import {
+  UserPreferences,
+  UserPreferencesDto,
+} from './dto/user-preferences.dto';
 import { ChangePasswordDto, UpdateUserDto } from './dto/update-user.dto';
 import { UserService } from './user.service';
 
@@ -55,6 +59,33 @@ export class UserController {
     @CurrentUser() user: AuthUser,
   ): Promise<void> {
     await this.userService.update(user, body);
+  }
+
+  @Get('me/preferences')
+  @ApiOperation({
+    summary: 'Retorna as preferências do usuário autenticado',
+    description:
+      'Devolve só as chaves já salvas em `userPreferences`. Campos ainda ' +
+      'não definidos ficam ausentes.',
+  })
+  getPreferences(@CurrentUser() user: AuthUser): Promise<UserPreferences> {
+    return this.userService.getPreferences(user);
+  }
+
+  @Patch('me/preferences')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Atualiza as preferências do usuário autenticado',
+    description:
+      'Aceita um subconjunto de `theme`, `editorFontSize`, `editorWordWrap`, ' +
+      '`editorTheme` e `adminNotifyBugReport`. Os campos enviados são ' +
+      'mesclados ao JSON já salvo; chaves fora desse conjunto são rejeitadas.',
+  })
+  updatePreferences(
+    @Body() body: UserPreferencesDto,
+    @CurrentUser() user: AuthUser,
+  ): Promise<void> {
+    return this.userService.updatePreferences(user, body);
   }
 
   @Public()

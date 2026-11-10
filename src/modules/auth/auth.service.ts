@@ -8,6 +8,10 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { Role, User } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import {
+  parseStoredUserPreferences,
+  UserPreferences,
+} from '../user/dto/user-preferences.dto';
 import { UserRepository } from '../user/repositories/user.repository';
 import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
@@ -23,6 +27,7 @@ export interface AuthResponse {
     name: string;
     role: Role;
     institutionId: number | null;
+    userPreferences: UserPreferences;
   };
 }
 
@@ -86,11 +91,14 @@ export class AuthService {
   }
 
   private buildAuthResponse(user: User): AuthResponse {
+    const userPreferences = parseStoredUserPreferences(user.userPreferences);
+
     const payload: JwtPayload = {
       userId: user.userId,
       email: user.email,
       name: user.name,
       role: user.role,
+      userPreferences,
     };
 
     return {
@@ -101,6 +109,7 @@ export class AuthService {
         name: user.name,
         role: user.role,
         institutionId: user.institutionId,
+        userPreferences,
       },
     };
   }

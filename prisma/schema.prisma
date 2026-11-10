@@ -15,17 +15,18 @@ model Institution {
 }
 
 model User {
-  userId        String       @id @default(uuid())
-  name          String       @db.VarChar(255)
-  email         String       @unique @db.VarChar(255)
-  password      String       @db.VarChar(255)
-  institutionId Int?
-  role          Role         @default(STUDENT)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  submissions   Submission[]
-  tasks         Task[]
-  desativado    Boolean      @default(false)
+  userId          String       @id @default(uuid())
+  name            String       @db.VarChar(255)
+  email           String       @unique @db.VarChar(255)
+  password        String       @db.VarChar(255)
+  institutionId   Int?
+  role            Role         @default(STUDENT)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  submissions     Submission[]
+  tasks           Task[]
+  desativado      Boolean      @default(false)
+  userPreferences Json         @default("{}") @db.JsonB
 
   classes Class[]
 

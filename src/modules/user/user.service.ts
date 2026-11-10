@@ -18,6 +18,11 @@ import { AuditService } from '../audit/audit.service';
 import { EmailerService } from '../../infra/emailer/emailer.service';
 import { GetUsersQueryDto, UserListItem } from './dto/get-users.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
+import {
+  parseStoredUserPreferences,
+  UserPreferences,
+  UserPreferencesDto,
+} from './dto/user-preferences.dto';
 import { ChangePasswordDto, UpdateUserDto } from './dto/update-user.dto';
 import { UserRepository } from './repositories/user.repository';
 
@@ -53,6 +58,37 @@ export class UserService {
     if (data.email) {
       await this.sendEmailChangeLink(user, data.email);
     }
+  }
+
+  /**
+   * Mescla as preferências enviadas com o JSON já salvo.
+   * Chaves ausentes no body permanecem; chaves desconhecidas no body
+   * são rejeitadas pelo DTO.
+   */
+  async updatePreferences(
+    user: AuthUser,
+    data: UserPreferencesDto,
+  ): Promise<void> {
+    const current = await this.userRepository.findById(user.userId);
+    if (!current) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    const stored = parseStoredUserPreferences(current.userPreferences);
+
+    await this.userRepository.updatePreferences(user.userId, {
+      ...stored,
+      ...data,
+    });
+  }
+
+  async getPreferences(user: AuthUser): Promise<UserPreferences> {
+    const current = await this.userRepository.findById(user.userId);
+    if (!current) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    return parseStoredUserPreferences(current.userPreferences);
   }
 
   /**

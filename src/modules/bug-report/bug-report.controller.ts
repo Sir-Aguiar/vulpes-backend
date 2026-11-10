@@ -54,7 +54,8 @@ export class BugReportController {
       'e screenshots são opcionais. `status` inicia como OPEN e `severity` ' +
       'como LOW. Evidências vão para `bug_evidences` no bucket; no banco ' +
       'ficam apenas as URLs. A resposta sai com o relato gravado, sem ' +
-      'esperar o email. Em seguida, os administradores ativos são notificados. ' +
+      'esperar o email. Em seguida, são notificados os administradores ativos ' +
+      'com `userPreferences.adminNotifyBugReport` igual a true. ' +
       'Falha de envio fica no log e não altera a resposta.',
   })
   @ApiConsumes('multipart/form-data')
