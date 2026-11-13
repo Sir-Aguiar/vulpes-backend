@@ -32,6 +32,21 @@ services:
     ports:
       - '6379:6379'
 
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: vulpes-rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+
 volumes:
   pgdata:
+    driver: local
+  rabbitmqdata:
     driver: local
