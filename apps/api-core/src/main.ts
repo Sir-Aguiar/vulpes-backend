@@ -67,7 +67,7 @@ async function bootstrap() {
     swaggerOptions: { persistAuthorization: true },
   });
 
-  const port = envService.get('PORT');
+  const port = envService.get('API_CORE_PORT');
   await app.listen(port);
   
   Logger.log(`Application listening on port ${port}`, 'Bootstrap');

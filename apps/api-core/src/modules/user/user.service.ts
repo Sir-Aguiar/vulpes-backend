@@ -122,7 +122,7 @@ export class UserService {
       { expiresIn: '30m' },
     );
 
-    const link = `${this.envService.get('HOST')}/user/verify-email-link/${Buffer.from(token).toString('base64url')}`;
+    const link = `${this.envService.get('API_CORE_HOST')}/user/verify-email-link/${Buffer.from(token).toString('base64url')}`;
 
     return link;
   }
