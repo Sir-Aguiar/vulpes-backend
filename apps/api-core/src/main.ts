@@ -41,6 +41,7 @@ async function bootstrap() {
       { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
       'bearer',
     )
+    .addTag('internal', 'Ping entre api-core e game-service')
     .addTag('auth', 'Autenticação e cadastro de usuários')
     .addTag('user', 'Dados do usuário autenticado (perfil, troca de email)')
     .addTag('reset-password', 'Fluxo de redefinição de senha')

@@ -23,6 +23,7 @@ import { ClassTaskModule } from './modules/class-task/class-task.module';
 import { ClassModule } from './modules/class/class.module';
 import { InstitutionModule } from './modules/institution/institution.module';
 import { ListModule } from './modules/list/list.module';
+import { PingModule } from './modules/ping/ping.module';
 import { ProfessorPermissionModule } from './modules/professor-permission/professor-permission.module';
 import { ResetPasswordModule } from './modules/reset-password/reset-password.module';
 import { StudentClassPermissionRequestModule } from './modules/student-class-permission-request/student-class-permission-request.module';
@@ -45,6 +46,7 @@ import { UserModule } from './modules/user/user.module';
     ClassTaskModule,
     ClassTaskListModule,
     ListModule,
+    PingModule,
     TaskModule,
     SubmissionModule,
     InstitutionModule,

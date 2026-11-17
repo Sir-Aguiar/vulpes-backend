@@ -24,6 +24,7 @@ export const envSchema = z
     EMAIL_PORT: z.coerce.number().int().positive().default(587),
 
     REDIS_URL: z.string().min(1, 'REDIS_URL is required'),
+    RABBITMQ_URL: z.string().min(1, 'RABBITMQ_URL is required'),
     RSA_PRIVATE_KEY: z
       .string()
       .optional()
