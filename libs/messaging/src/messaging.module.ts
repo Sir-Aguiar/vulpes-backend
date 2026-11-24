@@ -1,7 +1,18 @@
 import { DynamicModule, Module, type InjectionToken } from '@nestjs/common';
-import { PingListener } from './ping.listener';
-import { RabbitmqClient } from './rabbitmq.client';
+import { RabbitmqConnection } from './connection/rabbitmq.connection';
+import { PingConsumer } from './ping/ping.consumer';
+import { PingPublisher } from './ping/ping.publisher';
 import { RABBITMQ_OPTIONS, type RabbitmqOptions } from './rabbitmq.options';
+import { Consumer } from './transport/consumer';
+import { Publisher } from './transport/publisher';
+
+const providers = [
+  RabbitmqConnection,
+  Publisher,
+  Consumer,
+  PingPublisher,
+  PingConsumer,
+];
 
 @Module({})
 export class MessagingModule {
@@ -10,10 +21,9 @@ export class MessagingModule {
       module: MessagingModule,
       providers: [
         { provide: RABBITMQ_OPTIONS, useValue: options },
-        RabbitmqClient,
-        PingListener,
+        ...providers,
       ],
-      exports: [RabbitmqClient],
+      exports: [PingPublisher, Publisher],
     };
   }
 
@@ -33,10 +43,9 @@ export class MessagingModule {
           useFactory: options.useFactory,
           inject: options.inject ?? [],
         },
-        RabbitmqClient,
-        PingListener,
+        ...providers,
       ],
-      exports: [RabbitmqClient],
+      exports: [PingPublisher, Publisher],
     };
   }
 }

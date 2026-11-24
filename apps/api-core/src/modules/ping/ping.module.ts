@@ -11,7 +11,7 @@ import { PingController } from './ping.controller';
       inject: [EnvService],
       useFactory: (env: EnvService) => ({
         url: env.get('RABBITMQ_URL'),
-        consumePings: false,
+        consumers: [],
       }),
     }),
   ],

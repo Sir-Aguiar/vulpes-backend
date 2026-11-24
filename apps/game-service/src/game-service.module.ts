@@ -7,7 +7,7 @@ import { GameServiceService } from './game-service.service';
   imports: [
     MessagingModule.register({
       url: process.env.RABBITMQ_URL ?? 'amqp://guest:guest@localhost:5672',
-      consumePings: true,
+      consumers: ['ping'],
     }),
   ],
   controllers: [GameServiceController],
