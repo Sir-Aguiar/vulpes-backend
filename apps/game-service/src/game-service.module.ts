@@ -1,13 +1,22 @@
 import { Module } from '@nestjs/common';
 import { MessagingModule } from '../../../libs/messaging/src';
+import { ConfigModule } from './config/config.module';
+import { EnvService } from './config/env.service';
 import { GameServiceController } from './game-service.controller';
 import { GameServiceService } from './game-service.service';
+import { FirestoreModule } from './infra/firestore/firestore.module';
 
 @Module({
   imports: [
-    MessagingModule.register({
-      url: process.env.RABBITMQ_URL ?? 'amqp://guest:guest@localhost:5672',
-      consumers: ['ping'],
+    ConfigModule,
+    FirestoreModule,
+    MessagingModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [EnvService],
+      useFactory: (env: EnvService) => ({
+        url: env.get('RABBITMQ_URL'),
+        consumers: ['ping'],
+      }),
     }),
   ],
   controllers: [GameServiceController],

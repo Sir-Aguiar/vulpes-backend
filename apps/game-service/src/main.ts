@@ -1,11 +1,12 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import 'dotenv/config';
+import { EnvService } from './config/env.service';
 import { GameServiceModule } from './game-service.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(GameServiceModule);
-  const port = Number(process.env.GAME_SERVICE_PORT ?? 8081);
+  const env = app.get(EnvService);
+  const port = env.get('GAME_SERVICE_PORT');
 
   await app.listen(port);
 
